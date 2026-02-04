@@ -1,0 +1,163 @@
+// 设计系统 - 主题变量
+:root {
+  // 主题色板
+  --primary-start: #FF6B6B;
+  --primary-end: #FFB6C1;
+  --secondary: #E6E6FA;
+  --accent: #B76E79;
+  --background-light: #FFFDD0;
+  --background-dark: #2C1F3D;
+  
+  // 功能色
+  --status-sleeping: #9B59B6;
+  --status-working: #3498DB;
+  --status-exercising: #E74C3C;
+  --status-gaming: #F39C12;
+  --status-relaxing: #1ABC9C;
+  
+  // 字体
+  --font-heading: 'Noto Serif SC', serif;
+  --font-body: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Abril Fatface', cursive;
+  
+  // 动效
+  --ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --duration-fast: 200ms;
+  --duration-normal: 400ms;
+  --duration-slow: 800ms;
+}
+
+// 全局样式重置
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+// 玻璃拟态效果基类
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(255, 182, 193, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  transition: all var(--duration-normal) var(--ease-in-out);
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 
+      0 12px 40px rgba(255, 182, 193, 0.3),
+      inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  }
+}
+
+// 呼吸灯效果
+@keyframes breathing-glow {
+  0%, 100% {
+    box-shadow: 
+      0 8px 32px rgba(255, 182, 193, 0.2),
+      0 0 20px rgba(var(--primary-start), 0.5);
+  }
+  50% {
+    box-shadow: 
+      0 12px 40px rgba(255, 182, 193, 0.4),
+      0 0 30px rgba(var(--primary-start), 0.8);
+  }
+}
+
+.breathing {
+  animation: breathing-glow 2s ease-in-out infinite;
+}
+
+// 极光背景动画
+@keyframes aurora {
+  0%, 100% {
+    transform: translateX(-50%) translateY(-50%) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translateX(-50%) translateY(-50%) rotate(120deg) scale(1.1);
+  }
+  66% {
+    transform: translateX(-50%) translateY(-50%) rotate(240deg) scale(0.9);
+  }
+}
+
+.aurora-bg {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 200vw;
+  height: 200vh;
+  background: linear-gradient(45deg, #FF6B6B, #FFB6C1, #E6E6FA);
+  animation: aurora 10s ease-in-out infinite;
+  filter: blur(80px);
+  opacity: 0.3;
+  z-index: -1;
+}
+
+// 粒子动画容器
+.particles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+// 响应式布局
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  
+  @media (max-width: 768px) {
+    padding: 0 16px;
+  }
+}
+
+// 页面切换动画
+.page-enter-active,
+.page-leave-active {
+  transition: all var(--duration-slow) var(--ease-in-out);
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+// 工具类
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

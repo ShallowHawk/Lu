@@ -26,5 +26,4 @@ Thumbs.db
 .env.local
 .env.*.local
 
-# Nested git repositories
-sleepy-status/
+

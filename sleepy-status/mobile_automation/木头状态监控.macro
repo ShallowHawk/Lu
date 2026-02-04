@@ -1,0 +1,347 @@
+{
+  "macros": [
+    {
+      "name": "B站应用状态",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "application_launched",
+          "applications": ["com.bilibili.app.in", "tv.danmaku.bili"],
+          "check_foreground": true
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=4&user=木头",
+          "method": "GET",
+          "timeout": 5000,
+          "note": "修改URL中的user参数为实际用户（木头或乾雨）"
+        },
+        {
+          "type": "toast",
+          "message": "状态已更新：看B站 📱",
+          "duration": "short"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "游戏应用状态",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "application_launched",
+          "applications": [
+            "com.tencent.tmgp.sgame",
+            "com.tencent.tmgp.pubgmhd", 
+            "com.mihoyo.genshin",
+            "com.hypergryph.arknights"
+          ],
+          "check_foreground": true
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=5&user=木头",
+          "method": "GET",
+          "timeout": 5000
+        },
+        {
+          "type": "toast",
+          "message": "状态已更新：玩游戏 🎮",
+          "duration": "short"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "音乐应用状态",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "application_launched",
+          "applications": [
+            "com.netease.cloudmusic",
+            "com.tencent.qqmusic",
+            "com.kugou.android",
+            "com.spotify.music"
+          ],
+          "check_foreground": true
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=6&user=木头",
+          "method": "GET",
+          "timeout": 5000
+        },
+        {
+          "type": "toast",
+          "message": "状态已更新：听音乐 🎵",
+          "duration": "short"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "学习应用状态",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "application_launched",
+          "applications": [
+            "com.youdao.dict",
+            "com.baicizhan.main",
+            "com.chaoxing.mobile",
+            "com.alibaba.android.rimet",
+            "com.tencent.wemeet.app"
+          ],
+          "check_foreground": true
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=7&user=木头",
+          "method": "GET",
+          "timeout": 5000
+        },
+        {
+          "type": "toast",
+          "message": "状态已更新：学习中 📚",
+          "duration": "short"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "夜间睡眠时间",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "time_trigger",
+          "time": "22:00",
+          "days": [1, 2, 3, 4, 5, 6, 7]
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=1&user=木头",
+          "method": "GET",
+          "timeout": 5000
+        },
+        {
+          "type": "toast",
+          "message": "晚安时间到！状态已更新：睡觉中 😴",
+          "duration": "long"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "早晨起床时间",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "time_trigger",
+          "time": "07:00",
+          "days": [1, 2, 3, 4, 5, 6, 7]
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=2&user=木头",
+          "method": "GET",
+          "timeout": 5000
+        },
+        {
+          "type": "toast",
+          "message": "早安！状态已更新：工作中 💻",
+          "duration": "short"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "工作日开始",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "time_trigger",
+          "time": "09:00",
+          "days": [2, 3, 4, 5, 6]
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=2&user=木头",
+          "method": "GET",
+          "timeout": 5000
+        },
+        {
+          "type": "toast",
+          "message": "工作开始！状态已更新：工作中 💻",
+          "duration": "short"
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "name": "音乐播放检测",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "audio_state_change",
+          "state": "playing",
+          "audio_type": "music"
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=6&user=木头",
+          "method": "GET",
+          "timeout": 5000
+        },
+        {
+          "type": "toast",
+          "message": "检测到音乐播放，状态已更新：听音乐 🎵",
+          "duration": "short"
+        }
+      ],
+      "constraints": [
+        {
+          "type": "audio_duration",
+          "minimum_seconds": 30
+        }
+      ]
+    },
+    {
+      "name": "夜间充电睡眠",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "power_state_change",
+          "state": "charging_started"
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=1&user=木头",
+          "method": "GET",
+          "timeout": 5000
+        },
+        {
+          "type": "toast",
+          "message": "夜间充电检测，状态已更新：睡觉中 😴",
+          "duration": "short"
+        }
+      ],
+      "constraints": [
+        {
+          "type": "time_range",
+          "start_time": "22:00",
+          "end_time": "06:00"
+        }
+      ]
+    },
+    {
+      "name": "运动步数检测",
+      "enabled": true,
+      "triggers": [
+        {
+          "type": "sensor_trigger",
+          "sensor_type": "step_counter",
+          "threshold": 100,
+          "duration_minutes": 5
+        }
+      ],
+      "actions": [
+        {
+          "type": "http_request",
+          "url": "http://YOUR_SERVER_IP:5000/set?secret=birthday2024&status=3&user=木头",
+          "method": "GET",
+          "timeout": 5000
+        },
+        {
+          "type": "toast",
+          "message": "检测到运动，状态已更新：运动中 🏃‍♀️",
+          "duration": "short"
+        }
+      ],
+      "constraints": [
+        {
+          "type": "location_active",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "name": "server_ip",
+      "type": "string",
+      "value": "YOUR_SERVER_IP",
+      "description": "服务器IP地址，请修改为实际地址"
+    },
+    {
+      "name": "secret_key", 
+      "type": "string",
+      "value": "birthday2024",
+      "description": "API密钥"
+    },
+    {
+      "name": "current_user",
+      "type": "string",
+      "value": "木头",
+      "description": "当前用户（木头或乾雨）"
+    },
+    {
+      "name": "last_status_update",
+      "type": "string", 
+      "value": "",
+      "description": "最后状态更新时间"
+    }
+  ],
+  "settings": {
+    "version": "2.0",
+    "created_by": "木头&乾雨状态监控系统",
+    "description": "自动监控手机应用使用情况并更新状态到服务器（支持双用户）",
+    "network_timeout": 5000,
+    "toast_enabled": true,
+    "error_handling": "silent"
+  },
+  "installation_notes": [
+    "📱 导入前准备：",
+    "1. 确保已安装并配置MacroDroid应用",
+    "2. 授予MacroDroid必要权限（应用使用情况、通知等）",
+    "3. 将YOUR_SERVER_IP替换为实际的服务器IP地址",
+    "4. 修改所有URL中的user参数：将'木头'改为实际用户名",
+    "",
+    "🔧 导入后配置：",
+    "1. 检查所有宏是否正确导入",
+    "2. 修改user参数：所有URL中的user=木头，改为user=乾雨（如果是乾雨的手机）",
+    "3. 测试网络连接和HTTP请求",
+    "4. 根据需要调整时间和应用列表",
+    "5. 启用/禁用特定的宏规则",
+    "",
+    "👥 多用户配置：",
+    "1. 木头的手机：保持user=木头",
+    "2. 乾雨的手机：将所有URL中的user=木头改为user=乾雨",
+    "3. 一台手机监控两人：创建两套宏规则，分别设置不同的user参数",
+    "",
+    "⚠️ 注意事项：",
+    "1. 请确保手机能访问到服务器地址",
+    "2. 建议在WiFi环境下使用以节省流量",
+    "3. 可根据个人习惯调整时间触发器",
+    "4. 如有应用包名变化，请及时更新配置",
+    "5. 确保user参数与服务器端的用户名完全一致（木头/乾雨）"
+  ]
+} 

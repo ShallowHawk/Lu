@@ -1,80 +1,60 @@
 <template>
   <div class="love-timer-container">
-    <div class="glass-card timer-card">
-      <!-- 标题区域 -->
-      <div class="timer-header">
-        <h2 class="timer-title">
-          <span class="emoji">💕</span>
-          我们在一起已经
-          <span class="emoji">💕</span>
+    <div class="book-page">
+      <!-- 友人帐风格标题 -->
+      <div class="book-header">
+        <h2 class="book-title text-handwriting">
+          <span class="ink-mark">●</span> 结缘帐 <span class="ink-mark">●</span>
         </h2>
+        <div class="date-stamp">{{ formatDate(currentTime) }}</div>
       </div>
       
       <!-- 主要数字显示区域 -->
       <div class="timer-display">
         <!-- 天数显示 -->
-        <div class="time-unit days">
-          <div class="liquid-number" ref="daysRef">
-            <span class="number">{{ timeDifference.days }}</span>
+        <div class="time-column">
+          <div class="ink-circle">
+            <span class="number text-heading">{{ timeDifference.days }}</span>
           </div>
-          <div class="unit-label">天</div>
+          <div class="unit-label text-handwriting">天</div>
         </div>
         
-        <!-- 分隔符 -->
-        <div class="separator">🌟</div>
+        <div class="vertical-divider"></div>
         
         <!-- 小时显示 -->
-        <div class="time-unit hours">
-          <div class="liquid-number" ref="hoursRef">
-            <span class="number">{{ timeDifference.hours }}</span>
+        <div class="time-column">
+          <div class="ink-circle small">
+            <span class="number text-heading">{{ timeDifference.hours }}</span>
           </div>
-          <div class="unit-label">小时</div>
+          <div class="unit-label text-handwriting">时</div>
         </div>
-        
-        <!-- 分隔符 -->
-        <div class="separator">🌟</div>
         
         <!-- 分钟显示 -->
-        <div class="time-unit minutes">
-          <div class="liquid-number" ref="minutesRef">
-            <span class="number">{{ timeDifference.minutes }}</span>
+        <div class="time-column">
+          <div class="ink-circle small">
+            <span class="number text-heading">{{ timeDifference.minutes }}</span>
           </div>
-          <div class="unit-label">分钟</div>
+          <div class="unit-label text-handwriting">分</div>
         </div>
       </div>
       
-      <!-- 里程碑展示 -->
-      <div class="milestones">
-        <div class="milestone-item" v-for="milestone in milestones" :key="milestone.id">
-          <span class="milestone-emoji">{{ milestone.emoji }}</span>
-          <span class="milestone-text">{{ milestone.text }}</span>
-        </div>
+      <!-- 底部寄语 -->
+      <div class="book-footer text-handwriting">
+        <p>与你相遇，是这本友人帐最温柔的名字。</p>
+      </div>
+
+      <!-- 时间胶囊按钮 -->
+      <div class="stamp-seal" @click="showTimeCapsule = !showTimeCapsule" :class="{ active: showTimeCapsule }">
+        <div class="seal-inner">缘</div>
       </div>
       
-      <!-- 时间胶囊 -->
-      <div class="time-capsule" @click="showTimeCapsule = !showTimeCapsule">
-        <div class="capsule-trigger">
-          <span class="capsule-emoji">📮</span>
-          <span class="capsule-text">此刻的我们</span>
+      <!-- 胶囊内容 -->
+      <transition name="fade">
+        <div v-if="showTimeCapsule" class="capsule-content text-handwriting">
+          <p>今日心情：{{ currentMood }}</p>
+          <p>正在播放：{{ currentMusic }}</p>
         </div>
-        
-        <transition name="capsule">
-          <div v-if="showTimeCapsule" class="capsule-content">
-            <div class="capsule-item">
-              <span class="capsule-label">天气：</span>
-              <span class="capsule-value">{{ currentWeather }}</span>
-            </div>
-            <div class="capsule-item">
-              <span class="capsule-label">心情：</span>
-              <span class="capsule-value">{{ currentMood }}</span>
-            </div>
-            <div class="capsule-item">
-              <span class="capsule-label">正在听：</span>
-              <span class="capsule-value">{{ currentMusic }}</span>
-            </div>
-          </div>
-        </transition>
-      </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -87,11 +67,6 @@ import { gsap } from 'gsap'
 const currentTime = ref(new Date())
 const showTimeCapsule = ref(false)
 const animationInterval = ref(null)
-
-// 引用
-const daysRef = ref(null)
-const hoursRef = ref(null)
-const minutesRef = ref(null)
 
 // 恋爱开始时间
 const loveStartDate = new Date('2022-11-02T00:00:00')
@@ -108,139 +83,31 @@ const timeDifference = computed(() => {
   return { days, hours, minutes }
 })
 
-// 里程碑计算
-const milestones = computed(() => {
-  const days = timeDifference.value.days
-  const result = []
-  
-  // 检查特殊天数里程碑
-  if (days >= 100 && days < 200) {
-    result.push({ id: 1, emoji: '🎉', text: '已经100天啦！' })
-  } else if (days >= 365 && days < 730) {
-    result.push({ id: 2, emoji: '🎊', text: '已经一年啦！' })
-  } else if (days >= 730) {
-    result.push({ id: 3, emoji: '🎈', text: `已经${Math.floor(days/365)}年啦！` })
-  }
-  
-  // 即将到来的里程碑
-  const nextMilestone = getNextMilestone(days)
-  if (nextMilestone) {
-    result.push(nextMilestone)
-  }
-  
-  return result
-})
-
 // 当前状态（模拟数据）
-const currentWeather = ref('晴朗 ☀️')
-const currentMood = ref('甜甜的 🥰')
-const currentMusic = ref('我们的歌 🎵')
+const currentMood = ref('想见你 🌸')
+const currentMusic = ref('夏夕空 🎵')
 
 // 生命周期
 onMounted(() => {
   updateTime()
-  startAnimation()
-  initLiquidNumbers()
-})
-
-onUnmounted(() => {
-  if (animationInterval.value) {
-    clearInterval(animationInterval.value)
-  }
+  
+  // 入场动画
+  gsap.from('.book-page', {
+    y: 50,
+    opacity: 0,
+    duration: 1.5,
+    ease: "power3.out"
+  })
 })
 
 // 方法
 function updateTime() {
   currentTime.value = new Date()
-  
-  // 每分钟更新一次
   setTimeout(updateTime, 60000)
 }
 
-function startAnimation() {
-  // 数字跳动动画
-  animationInterval.value = setInterval(() => {
-    animateNumbers()
-  }, 2000)
-}
-
-function animateNumbers() {
-  const elements = [daysRef.value, hoursRef.value, minutesRef.value]
-  
-  elements.forEach((el, index) => {
-    if (el) {
-      gsap.to(el, {
-        scale: 1.1,
-        duration: 0.2,
-        yoyo: true,
-        repeat: 1,
-        ease: "power2.inOut",
-        delay: index * 0.1
-      })
-    }
-  })
-}
-
-function initLiquidNumbers() {
-  // 初始化液态数字效果
-  const liquidElements = document.querySelectorAll('.liquid-number')
-  
-  liquidElements.forEach(el => {
-    // 添加液态背景
-    const liquidBg = document.createElement('div')
-    liquidBg.className = 'liquid-bg'
-    el.appendChild(liquidBg)
-    
-    // 液态动画
-    gsap.to(liquidBg, {
-      scaleY: 1.2,
-      duration: 2,
-      ease: "sine.inOut",
-      repeat: -1,
-      yoyo: true
-    })
-  })
-}
-
-function getNextMilestone(currentDays) {
-  const milestones = [100, 200, 365, 500, 730, 1000, 1095]
-  
-  for (const milestone of milestones) {
-    if (currentDays < milestone) {
-      const daysLeft = milestone - currentDays
-      return {
-        id: `next-${milestone}`,
-        emoji: '🎯',
-        text: `距离${milestone}天还有${daysLeft}天`
-      }
-    }
-  }
-  
-  // 如果超过所有预设里程碑，计算下一个百天
-  const nextHundred = Math.ceil(currentDays / 100) * 100
-  const daysLeft = nextHundred - currentDays
-  return {
-    id: `next-${nextHundred}`,
-    emoji: '🎯',
-    text: `距离${nextHundred}天还有${daysLeft}天`
-  }
-}
-
-// 鼠标悬停时间凝固效果
-function handleMouseEnter() {
-  gsap.to('.timer-display', {
-    filter: 'hue-rotate(180deg)',
-    duration: 0.5,
-    ease: "power2.out"
-  })
-}
-
-function handleMouseLeave() {
-  gsap.to('.timer-display', {
-    filter: 'hue-rotate(0deg)',
-    duration: 0.5,
-    ease: "power2.out"
-  })
+function formatDate(date) {
+  return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 </script>
 
@@ -251,212 +118,199 @@ function handleMouseLeave() {
   justify-content: center;
 }
 
-.timer-card {
-  padding: 40px;
-  text-align: center;
-  max-width: 800px;
+.book-page {
+  background-color: #FDFBF7;
   width: 100%;
+  max-width: 600px;
+  padding: 40px;
+  box-shadow: 
+    0 1px 4px rgba(0,0,0,0.05),
+    0 5px 25px rgba(0,0,0,0.1);
   position: relative;
-  overflow: hidden;
-  cursor: pointer;
+  // 纸张纹理
+  background-image: linear-gradient(#E8E4D9 1px, transparent 1px);
+  background-size: 100% 30px;
+  border-left: 4px double #C4B6A6; // 模拟装订线
   
-  &:hover {
-    .timer-display {
-      transform: scale(1.02);
-    }
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.05) 50%);
+    pointer-events: none;
   }
 }
 
-.timer-header {
+.book-header {
+  text-align: center;
   margin-bottom: 40px;
+  position: relative;
   
-  .timer-title {
-    font-family: var(--font-heading);
-    font-size: clamp(1.5rem, 4vw, 2rem);
-    color: white;
-    margin: 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  .book-title {
+    font-size: 2.5rem;
+    color: var(--text-ink);
+    margin-bottom: 10px;
     
-    .emoji {
-      margin: 0 8px;
-      animation: pulse 2s ease-in-out infinite;
+    .ink-mark {
+      color: var(--primary-pink);
+      font-size: 1.5rem;
+      vertical-align: middle;
     }
   }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  
+  .date-stamp {
+    font-family: var(--font-body);
+    color: var(--text-light);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    writing-mode: horizontal-tb; // 保持横排
+  }
 }
 
 .timer-display {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 20px;
   margin-bottom: 40px;
-  transition: all var(--duration-normal) var(--ease-in-out);
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 16px;
-  }
+  gap: 20px;
 }
 
-.time-unit {
+.time-column {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-}
-
-.liquid-number {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  overflow: hidden;
   
-  .number {
-    font-family: var(--font-display);
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: white;
-    z-index: 2;
-    position: relative;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-  
-  .liquid-bg {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 30%;
-    background: linear-gradient(180deg, 
-      rgba(255, 182, 193, 0.8) 0%, 
-      rgba(255, 107, 107, 0.6) 100%);
-    z-index: 1;
-    border-radius: 0 0 20px 20px;
-  }
-  
-  @media (max-width: 768px) {
+  .ink-circle {
     width: 100px;
     height: 100px;
+    border: 3px solid var(--text-ink);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    position: relative;
+    
+    // 模拟墨迹不规则边缘
+    box-shadow: 
+      inset 0 0 0 2px rgba(74, 59, 50, 0.1),
+      2px 2px 0 rgba(74, 59, 50, 0.1);
+      
+    &.small {
+      width: 70px;
+      height: 70px;
+      border-width: 2px;
+      
+      .number { font-size: 1.8rem; }
+    }
     
     .number {
-      font-size: 2rem;
+      font-size: 2.5rem;
+      color: var(--text-ink);
     }
   }
-}
-
-.unit-label {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
-}
-
-.separator {
-  font-size: 1.5rem;
-  animation: twinkle 1.5s ease-in-out infinite;
   
-  @media (max-width: 768px) {
-    display: none;
+  .unit-label {
+    font-size: 1.2rem;
+    color: var(--text-light);
   }
 }
 
-@keyframes twinkle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.2); }
+.vertical-divider {
+  width: 1px;
+  height: 60px;
+  background-color: var(--text-light);
+  opacity: 0.3;
 }
 
-.milestones {
-  margin-bottom: 30px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px;
+.book-footer {
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--text-ink);
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--text-light);
 }
 
-.milestone-item {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 12px 20px;
-  border-radius: 25px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  font-size: 0.9rem;
-  
-  .milestone-emoji {
-    margin-right: 8px;
-  }
-}
-
-.time-capsule {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 30px;
-  cursor: pointer;
-}
-
-.capsule-trigger {
+.stamp-seal {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border: 3px solid var(--accent-red);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  transition: color var(--duration-fast) var(--ease-in-out);
+  color: var(--accent-red);
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  transform: rotate(-15deg);
+  opacity: 0.8;
+  cursor: pointer;
+  transition: all 0.3s ease;
   
   &:hover {
-    color: white;
+    transform: rotate(-15deg) scale(1.1);
+    opacity: 1;
   }
   
-  .capsule-emoji {
-    font-size: 1.2rem;
+  &.active {
+    background: var(--accent-red);
+    color: white;
   }
 }
 
 .capsule-content {
   margin-top: 20px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--text-ink);
 }
 
-.capsule-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  color: white;
-  font-size: 0.9rem;
-  
-  .capsule-label {
-    opacity: 0.8;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+// 移动端适配
+@media (max-width: 480px) {
+  .book-page {
+    padding: 20px;
   }
   
-  .capsule-value {
-    font-weight: 500;
+  .book-title {
+    font-size: 1.8rem !important;
   }
-}
-
-// 过渡动画
-.capsule-enter-active,
-.capsule-leave-active {
-  transition: all var(--duration-normal) var(--ease-in-out);
-}
-
-.capsule-enter-from {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.capsule-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
+  
+  .timer-display {
+    gap: 10px;
+  }
+  
+  .ink-circle {
+    width: 80px !important;
+    height: 80px !important;
+    
+    &.small {
+      width: 50px !important;
+      height: 50px !important;
+      
+      .number { font-size: 1.2rem !important; }
+    }
+    
+    .number { font-size: 1.8rem !important; }
+  }
 }
 </style>

@@ -17,6 +17,7 @@ HISTORY_FILE = 'history.json'
 PHOTOS_DIR = 'public/images'
 PHOTOS_INFO_FILE = 'photos.json'
 MESSAGES_FILE = 'messages.json'
+OMIKUJI_FILE = 'omikuji.json'
 
 # 允许上传的图片格式
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -137,6 +138,48 @@ def save_messages(messages):
     """保存留言信息"""
     with open(MESSAGES_FILE, 'w', encoding='utf-8') as f:
         json.dump(messages, f, ensure_ascii=False, indent=2)
+
+def load_omikuji():
+    """加载抽签记录"""
+    if os.path.exists(OMIKUJI_FILE):
+        try:
+            with open(OMIKUJI_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            pass
+    return []
+
+def save_omikuji(data):
+    """保存抽签记录"""
+    with open(OMIKUJI_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def get_constellation(month, day):
+    """根据日期获取星座"""
+    dates = (20, 19, 21, 20, 21, 22, 23, 23, 23, 24, 23, 22)
+    constellations = ("摩羯座", "水瓶座", "双鱼座", "白羊座", "金牛座", "双子座", 
+                     "巨蟹座", "狮子座", "处女座", "天秤座", "天蝎座", "射手座")
+    if day < dates[month-1]:
+        return constellations[month-1]
+    else:
+        return constellations[month]
+
+def get_weather_mock():
+    """模拟天气数据"""
+    weathers = ["☀️ 晴朗", "⛅ 多云", "☁️ 阴天", "🌧️ 小雨", "⛈️ 雷阵雨", "🌥️ 局部多云"]
+    temps = [22, 24, 26, 28, 30, 25, 23]
+    tips = [
+        "今天阳光明媚，适合想念。",
+        "记得带伞，别淋湿了小笨蛋。",
+        "天气微凉，多穿一件外套。",
+        "适合窝在家里看电影。",
+        "空气清新，出去走走吧。"
+    ]
+    return {
+        "weather": random.choice(weathers),
+        "temp": f"{random.choice(temps)}°C",
+        "tip": random.choice(tips)
+    }
 
 def allowed_file(filename):
     """检查文件扩展名是否允许"""
@@ -695,6 +738,116 @@ def update_message():
             "success": False,
             "error": str(e)
         }), 500
+
+# --- Omikuji API ---
+
+@app.route('/api/omikuji/today', methods=['GET'])
+def check_omikuji_today():
+    """检查今日是否已抽签"""
+    user = request.args.get('user', '木头') # 默认为木头
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    
+    history = load_omikuji()
+    
+    # 查找今日记录
+    today_record = next((item for item in history if item['date'] == date_str and item['user'] == user), None)
+    
+    if today_record:
+        return jsonify({
+            "has_drawn": True,
+            "record": today_record
+        })
+    else:
+        return jsonify({
+            "has_drawn": False
+        })
+
+@app.route('/api/omikuji/draw', methods=['POST'])
+def draw_omikuji():
+    """执行抽签"""
+    try:
+        data = request.json or {}
+        user = data.get('user', '木头')
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        
+        # 再次检查是否已抽（防止并发）
+        history = load_omikuji()
+        if any(item['date'] == date_str and item['user'] == user for item in history):
+            return jsonify({"error": "今天已经抽过签啦！"}), 400
+            
+        # 签文库
+        omikuji_data = [
+            { "rank": "大吉", "poem": "相思相见知何日，此时此夜难为情。", "wish": "心想事成", "person": "即将相见", "love": "天作之合", "prize": "🥤 奶茶兑换券" },
+            { "rank": "中吉", "poem": "身无彩凤双飞翼，心有灵犀一点通。", "wish": "努力可成", "person": "在路上了", "love": "情投意合", "prize": "💆‍♂️ 按摩券一张" },
+            { "rank": "小吉", "poem": "两情若是久长时，又岂在朝朝暮暮。", "wish": "静候佳音", "person": "稍安勿躁", "love": "细水长流", "prize": None },
+            { "rank": "吉", "poem": "玲珑骰子安红豆，入骨相思知不知。", "wish": "诚心则灵", "person": "会有音讯", "love": "互相信任", "prize": None },
+            # 彩蛋奖品
+            { "rank": "大吉", "poem": "愿我如星君如月，夜夜流光相皎洁。", "wish": "万事胜意", "person": "就在身边", "love": "甜蜜美满", "prize": "🎬 电影兑换券" },
+            { "rank": "大吉", "poem": "山有木兮木有枝，心悦君兮君不知。", "wish": "得偿所愿", "person": "眼前人", "love": "命中注定", "prize": "👑 无理由原谅券" },
+            { "rank": "大吉", "poem": "既见君子，云胡不喜。", "wish": "喜乐安康", "person": "如影随形", "love": "琴瑟和鸣", "prize": "🍽️ 自制大餐券" }
+        ]
+        
+        # 抽签逻辑 (10% 概率出特殊大吉)
+        import random
+        rand_val = random.random()
+        if rand_val < 0.15: # 15% 概率出带奖品的大吉
+            # 过滤出有奖品的
+            prizes = [x for x in omikuji_data if x['prize']]
+            result = random.choice(prizes)
+        else:
+            # 随机出其他的
+            normals = [x for x in omikuji_data if not x['prize']]
+            result = random.choice(normals)
+            
+        # 获取星座和天气
+        # 假设乾雨是 7.27 (狮子), 木头是 7.16 (巨蟹)
+        birth_month = 7
+        birth_day = 27 if user == '乾雨' else 16
+        constellation = get_constellation(birth_month, birth_day)
+        
+        weather_info = get_weather_mock()
+        
+        # 构建记录
+        new_record = {
+            "id": str(uuid.uuid4()),
+            "user": user,
+            "date": date_str,
+            "timestamp": datetime.now().isoformat(),
+            "result": result,
+            "constellation": {
+                "name": constellation,
+                "fortune": "今日运势五颗星 ⭐⭐⭐⭐⭐" # 简化 Mock
+            },
+            "weather": weather_info
+        }
+        
+        history.append(new_record)
+        save_omikuji(history)
+        
+        return jsonify({
+            "success": True,
+            "data": new_record
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/omikuji/history', methods=['GET'])
+def get_omikuji_history():
+    """获取抽签历史"""
+    user = request.args.get('user')
+    history = load_omikuji()
+    
+    if user:
+        history = [item for item in history if item['user'] == user]
+        
+    # 倒序
+    history.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    return jsonify({
+        "success": True,
+        "history": history
+    })
 
 @app.route('/status_page')
 def status_page():

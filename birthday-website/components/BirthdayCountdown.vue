@@ -1,62 +1,83 @@
 <template>
   <div class="countdown-container">
-    <div class="glass-card countdown-card">
+    <div class="wafu-card countdown-card">
+      <!-- 装饰用纸带 -->
+      <div class="paper-tape"></div>
+      
       <!-- 木头生日倒计时 -->
       <div class="countdown-section">
-        <h3 class="countdown-title">
+        <h3 class="countdown-title text-heading">
           <span class="birthday-emoji">🪵</span>
           木头的破壳日
         </h3>
         
         <div v-if="mutouCountdown.showCountdown" class="countdown-display">
-          <div class="countdown-number">{{ mutouCountdown.days }}</div>
-          <div class="countdown-label">天</div>
-          <div class="countdown-number">{{ mutouCountdown.hours }}</div>
-          <div class="countdown-label">小时</div>
-          <div class="countdown-number">{{ mutouCountdown.minutes }}</div>
-          <div class="countdown-label">分钟</div>
+          <div class="time-block">
+            <div class="countdown-number text-heading">{{ mutouCountdown.days }}</div>
+            <div class="countdown-label text-handwriting">天</div>
+          </div>
+          <div class="time-block">
+            <div class="countdown-number text-heading">{{ mutouCountdown.hours }}</div>
+            <div class="countdown-label text-handwriting">时</div>
+          </div>
+          <div class="time-block">
+            <div class="countdown-number text-heading">{{ mutouCountdown.minutes }}</div>
+            <div class="countdown-label text-handwriting">分</div>
+          </div>
         </div>
         
         <div v-else class="age-display">
-          <div class="age-text">木头已经来到了这个世界上</div>
-          <div class="age-number">{{ mutouCountdown.daysSinceBirth }}</div>
-          <div class="age-label">天</div>
+          <div class="age-text text-handwriting">来到这个世界</div>
+          <div class="age-number-container">
+             <span class="age-number text-heading">{{ mutouCountdown.daysSinceBirth }}</span>
+             <span class="age-unit text-handwriting">天</span>
+          </div>
         </div>
         
-        <div class="countdown-message" v-if="mutouCountdown.isBirthday">
+        <div class="countdown-message text-handwriting" v-if="mutouCountdown.isBirthday">
           🎉 今天是木头的破壳日！🎉
         </div>
-        <div class="countdown-message" v-else-if="mutouCountdown.days <= 3 && mutouCountdown.showCountdown">
+        <div class="countdown-message text-handwriting" v-else-if="mutouCountdown.days <= 3 && mutouCountdown.showCountdown">
           💝 破壳日快到啦，好期待！
         </div>
       </div>
       
+      <div class="divider-line"></div>
+      
       <!-- 乾雨生日倒计时 -->
       <div class="countdown-section">
-        <h3 class="countdown-title">
+        <h3 class="countdown-title text-heading">
           <span class="birthday-emoji">🦅</span>
           乾雨的破壳日
         </h3>
         
         <div v-if="qianyuCountdown.showCountdown" class="countdown-display">
-          <div class="countdown-number">{{ qianyuCountdown.days }}</div>
-          <div class="countdown-label">天</div>
-          <div class="countdown-number">{{ qianyuCountdown.hours }}</div>
-          <div class="countdown-label">小时</div>
-          <div class="countdown-number">{{ qianyuCountdown.minutes }}</div>
-          <div class="countdown-label">分钟</div>
+          <div class="time-block">
+            <div class="countdown-number text-heading">{{ qianyuCountdown.days }}</div>
+            <div class="countdown-label text-handwriting">天</div>
+          </div>
+          <div class="time-block">
+            <div class="countdown-number text-heading">{{ qianyuCountdown.hours }}</div>
+            <div class="countdown-label text-handwriting">时</div>
+          </div>
+          <div class="time-block">
+            <div class="countdown-number text-heading">{{ qianyuCountdown.minutes }}</div>
+            <div class="countdown-label text-handwriting">分</div>
+          </div>
         </div>
         
         <div v-else class="age-display">
-          <div class="age-text">乾雨已经来到了这个世界上</div>
-          <div class="age-number">{{ qianyuCountdown.daysSinceBirth }}</div>
-          <div class="age-label">天</div>
+          <div class="age-text text-handwriting">来到这个世界</div>
+          <div class="age-number-container">
+             <span class="age-number text-heading">{{ qianyuCountdown.daysSinceBirth }}</span>
+             <span class="age-unit text-handwriting">天</span>
+          </div>
         </div>
         
-        <div class="countdown-message" v-if="qianyuCountdown.isBirthday">
+        <div class="countdown-message text-handwriting" v-if="qianyuCountdown.isBirthday">
           🎊 今天是乾雨的破壳日！🎊
         </div>
-        <div class="countdown-message" v-else-if="qianyuCountdown.days <= 7 && qianyuCountdown.showCountdown">
+        <div class="countdown-message text-handwriting" v-else-if="qianyuCountdown.days <= 7 && qianyuCountdown.showCountdown">
           🎁 乾雨的破壳日也快到了呢~
         </div>
       </div>
@@ -179,14 +200,54 @@ function calculateCountdownOrAge(birthDate, name) {
 }
 
 .countdown-card {
-  padding: 30px;
+  padding: 40px 30px;
   max-width: 600px;
   width: 100%;
   text-align: center;
+  position: relative;
+  background-color: #fff;
+  background-image: linear-gradient(0deg, transparent 24%, rgba(220, 220, 220, .3) 25%, rgba(220, 220, 220, .3) 26%, transparent 27%, transparent 74%, rgba(220, 220, 220, .3) 75%, rgba(220, 220, 220, .3) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(220, 220, 220, .3) 25%, rgba(220, 220, 220, .3) 26%, transparent 27%, transparent 74%, rgba(220, 220, 220, .3) 75%, rgba(220, 220, 220, .3) 76%, transparent 77%, transparent);
+  background-size: 50px 50px;
+}
+
+.paper-tape {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 30px;
+  background: rgba(240, 145, 153, 0.6); // 樱花粉胶带
+  transform: translateX(-50%) rotate(-2deg);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-right: 5px solid rgba(240, 145, 153, 0.6);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-left: 5px solid rgba(240, 145, 153, 0.6);
+  }
 }
 
 .countdown-section {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
   
   &:last-child {
     margin-bottom: 0;
@@ -194,13 +255,15 @@ function calculateCountdownOrAge(birthDate, name) {
 }
 
 .countdown-title {
-  font-family: var(--font-heading);
-  font-size: 1.3rem;
-  color: white;
+  font-size: 1.4rem;
+  color: var(--text-ink);
   margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   
   .birthday-emoji {
-    margin-right: 8px;
     animation: bounce 2s ease-in-out infinite;
   }
 }
@@ -215,117 +278,98 @@ function calculateCountdownOrAge(birthDate, name) {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
+.time-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .countdown-number {
-  font-family: var(--font-display);
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 16px 20px;
-  min-width: 80px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform var(--duration-fast) var(--ease-in-out);
+  font-size: 2.2rem;
+  color: var(--primary-red, #CB4042);
+  background: transparent;
+  padding: 5px 15px;
+  border-bottom: 2px solid var(--text-ink);
+  min-width: 60px;
+  transition: transform 0.3s ease;
   
   &:hover {
     transform: scale(1.1);
-  }
-  
-  @media (max-width: 768px) {
-    font-size: 2rem;
-    padding: 12px 16px;
-    min-width: 60px;
   }
 }
 
 .countdown-label {
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
+  color: var(--text-light);
+  margin-top: 5px;
 }
 
 .age-display {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 16px;
   
   .age-text {
     font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
+    color: var(--text-ink);
   }
   
-  .age-number {
-    font-family: var(--font-display);
-    font-size: 3rem;
-    font-weight: bold;
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 20px 30px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    animation: ageGlow 3s ease-in-out infinite;
+  .age-number-container {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
     
-    @media (max-width: 768px) {
-      font-size: 2.5rem;
-      padding: 16px 24px;
+    .age-number {
+      font-size: 3rem;
+      color: var(--text-ink);
+      line-height: 1;
     }
-  }
-  
-  .age-label {
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.8);
-    font-weight: 600;
-  }
-}
-
-@keyframes ageGlow {
-  0%, 100% { 
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-  }
-  50% { 
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+    
+    .age-unit {
+      font-size: 1.2rem;
+      color: var(--text-light);
+    }
   }
 }
 
 .countdown-message {
   font-size: 1.1rem;
-  color: white;
-  font-weight: 600;
-  padding: 12px 20px;
-  background: rgba(255, 107, 107, 0.3);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 107, 107, 0.5);
-  animation: messageGlow 2s ease-in-out infinite;
+  color: var(--accent-red);
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 15px;
+  border: 1px dashed var(--accent-red);
+  display: inline-block;
+  margin-top: 10px;
 }
 
-@keyframes messageGlow {
-  0%, 100% { box-shadow: 0 0 10px rgba(255, 107, 107, 0.5); }
-  50% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.8); }
+.divider-line {
+  height: 1px;
+  background-image: linear-gradient(to right, transparent, var(--text-light), transparent);
+  margin: 30px 0;
+  opacity: 0.3;
 }
 
 // 响应式设计
 @media (max-width: 768px) {
   .countdown-display {
-    gap: 12px;
+    gap: 15px;
   }
   
-  .countdown-title {
-    font-size: 1.1rem;
+  .countdown-number {
+    font-size: 1.8rem;
+    min-width: 50px;
   }
   
-  .countdown-message {
-    font-size: 1rem;
-    padding: 10px 16px;
+  .age-number-container .age-number {
+    font-size: 2.5rem;
   }
 }
 </style>

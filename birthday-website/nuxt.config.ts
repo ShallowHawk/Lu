@@ -24,7 +24,9 @@ export default defineNuxtConfig({
     families: {
       'Noto+Serif+SC': [400, 700],
       'PingFang+SC': [300, 400, 500, 600],
-      'Abril+Fatface': [400]
+      'Abril+Fatface': [400],
+      'ZCOOL+KuaiLe': [400],
+      'Long+Cang': [400]
     }
   },
   app: {

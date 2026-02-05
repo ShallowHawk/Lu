@@ -1,1176 +1,930 @@
 <template>
   <div class="status-container">
-    <div class="glass-card status-card">
-      <!-- 状态标题 -->
-      <div class="status-header">
-        <h3 class="status-title">
-          <span class="status-emoji">📱</span>
-          双人状态实时监控
-          <!-- 快速刷新按钮 -->
-          <button 
-            @click="manualRefresh" 
-            :disabled="loading"
-            class="quick-refresh-btn"
-            title="立即刷新状态"
-          >
-            <span class="refresh-icon" :class="{ 'spinning': loading }">🔄</span>
-          </button>
-        </h3>
-        <div class="last-update">
-          {{ lastUpdateText }}
-        </div>
-      </div>
+    <div class="omamori-rack">
+      <!-- 绳结装饰 -->
+      <div class="rope-decoration"></div>
       
-      <!-- 双人状态显示 -->
-      <div class="dual-status">
-        <!-- 木头状态 -->
-        <div class="user-status" :class="{ 'breathing': mutouStatus.id, 'offline': !mutouStatus.isOnline }">
-          <div class="user-header">
-            <span class="user-emoji">🪵</span>
-            <h4 class="user-name">木头</h4>
-            <!-- 在线状态指示器 -->
-            <div class="online-indicator" :class="{ 'online': mutouStatus.isOnline, 'offline': !mutouStatus.isOnline }">
-              <span class="status-dot"></span>
-              <span class="status-text">{{ mutouStatus.isOnline ? '在线' : '离线' }}</span>
-            </div>
-          </div>
-          
-          <div class="status-content" v-if="mutouStatus.id">
-            <!-- 动态Emoji动画 -->
-            <div class="animated-emoji" :class="`emoji-${mutouStatus.id}`">
-              {{ mutouStatus.emoji }}
-            </div>
-            
-            <!-- 状态描述 -->
-            <div class="status-description">
-              <h5 class="status-name">{{ mutouStatus.name }}</h5>
-              <p class="status-detail">{{ mutouStatus.description }}</p>
-            </div>
-            
-            <!-- 状态颜色指示器 -->
-            <div 
-              class="status-indicator" 
-              :style="{ backgroundColor: mutouStatus.color }"
-            />
-          </div>
-          
-          <!-- 加载状态 -->
-          <div v-else class="status-loading">
-            <div class="loading-spinner"></div>
-            <p>获取中...</p>
-          </div>
-        </div>
-        
-        <!-- 乾雨状态 -->
-        <div class="user-status" :class="{ 'breathing': qianyuStatus.id, 'offline': !qianyuStatus.isOnline }">
-          <div class="user-header">
-            <span class="user-emoji">🦅</span>
-            <h4 class="user-name">乾雨</h4>
-            <!-- 在线状态指示器 -->
-            <div class="online-indicator" :class="{ 'online': qianyuStatus.isOnline, 'offline': !qianyuStatus.isOnline }">
-              <span class="status-dot"></span>
-              <span class="status-text">{{ qianyuStatus.isOnline ? '在线' : '离线' }}</span>
-            </div>
-          </div>
-          
-          <div class="status-content" v-if="qianyuStatus.id">
-            <!-- 动态Emoji动画 -->
-            <div class="animated-emoji" :class="`emoji-${qianyuStatus.id}`">
-              {{ qianyuStatus.emoji }}
-            </div>
-            
-            <!-- 状态描述 -->
-            <div class="status-description">
-              <h5 class="status-name">{{ qianyuStatus.name }}</h5>
-              <p class="status-detail">{{ qianyuStatus.description }}</p>
-            </div>
-            
-            <!-- 状态颜色指示器 -->
-            <div 
-              class="status-indicator" 
-              :style="{ backgroundColor: qianyuStatus.color }"
-            />
-          </div>
-          
-          <!-- 加载状态 -->
-          <div v-else class="status-loading">
-            <div class="loading-spinner"></div>
-            <p>获取中...</p>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 状态历史 -->
-      <div class="status-history" v-if="statusHistory.length > 0">
-        <h5 class="history-title">最近状态</h5>
-        <div class="history-timeline">
+      <!-- 御守挂件区域 -->
+      <div class="omamori-list">
+        <!-- 木头的御守 -->
+        <div class="omamori-wrapper animate-sway" style="animation-delay: 0s;">
+          <div class="omamori-knot"></div>
           <div 
-            v-for="item in statusHistory.slice(0, 3)" 
-            :key="`${item.timestamp}-${item.status}-${item.user}`"
-            class="history-item"
+            class="omamori mutou" 
+            :class="{ 'online': mutouStatus.isOnline, 'expanded': mutouExpanded }"
+            @click="toggleMutouExpand"
           >
-            <div class="history-time">{{ formatTime(item.timestamp) }}</div>
-            <div class="history-status">
-              <span class="history-user">{{ getUserEmoji(item.user) }}</span>
-              <span class="history-emoji">{{ getStatusById(item.status)?.emoji }}</span>
-              <span class="history-name">{{ getStatusById(item.status)?.name }}</span>
+            <div class="omamori-top"></div>
+            <div class="omamori-body">
+              <div class="omamori-label text-heading">木头</div>
+              <div class="omamori-avatar">
+                <img src="/images/mutou_avatar.jpg" alt="木头" class="avatar-img" />
+              </div>
+              
+              <!-- 默认显示状态名 -->
+              <div class="omamori-status text-handwriting" v-if="!mutouExpanded">
+                {{ mutouStatus.name || '获取中' }}
+              </div>
+              
+              <!-- 展开显示详细信息 -->
+              <div class="omamori-details" v-else>
+                <div class="detail-status">{{ mutouStatus.name }}</div>
+                <div class="detail-desc">{{ mutouStatus.description || '暂无描述' }}</div>
+                <div class="detail-time">{{ formatLastUpdate(mutouStatus.last_update) }}</div>
+              </div>
+              
+              <!-- 展开指示器 -->
+              <div class="expand-indicator">{{ mutouExpanded ? '▲' : '▼' }}</div>
             </div>
           </div>
+          <div class="omamori-tassel"></div>
+        </div>
+
+        <!-- 乾雨的御守 -->
+        <div class="omamori-wrapper animate-sway" style="animation-delay: 1s;">
+          <div class="omamori-knot"></div>
+          <div 
+            class="omamori qianyu" 
+            :class="{ 'online': qianyuStatus.isOnline, 'expanded': qianyuExpanded }"
+            @click="toggleQianyuExpand"
+          >
+            <div class="omamori-top"></div>
+            <div class="omamori-body">
+              <div class="omamori-label text-heading">乾雨</div>
+              <div class="omamori-avatar">
+                <img src="/images/qianyu_avatar.jpg" alt="乾雨" class="avatar-img" />
+              </div>
+              
+              <div class="omamori-status text-handwriting" v-if="!qianyuExpanded">
+                {{ qianyuStatus.name || '获取中' }}
+              </div>
+              
+              <div class="omamori-details" v-else>
+                <div class="detail-status">{{ qianyuStatus.name }}</div>
+                <div class="detail-desc">{{ qianyuStatus.description || '暂无描述' }}</div>
+                <div class="detail-time">{{ formatLastUpdate(qianyuStatus.last_update) }}</div>
+              </div>
+              
+              <div class="expand-indicator">{{ qianyuExpanded ? '▲' : '▼' }}</div>
+            </div>
+          </div>
+          <div class="omamori-tassel"></div>
         </div>
       </div>
       
-      <!-- 互动按钮 -->
-      <div class="status-actions">
-        <button 
-          class="action-btn like-btn"
-          @click="likeStatus"
-          :class="{ 'liked': hasLiked }"
+      <!-- 抽签筒 -->
+      <div v-if="userRole === 'mutou'" class="omikuji-container">
+        <div 
+          class="omikuji-box" 
+          :class="{ 'shaking': isShaking, 'disabled': hasDrawnToday }" 
+          @click="drawOmikuji"
         >
-          <span class="btn-emoji">{{ hasLiked ? '❤️' : '🤍' }}</span>
-          <span class="btn-text">{{ hasLiked ? '已点赞' : '点赞' }}</span>
+          <div class="omikuji-label text-heading">运势</div>
+          <div class="omikuji-hole"></div>
+          <!-- 掉出的签 -->
+          <div class="omikuji-stick" :class="{ 'falling': isStickFalling }">
+            <span class="stick-text">第{{ currentStickNum }}番</span>
+          </div>
+        </div>
+        <p class="omikuji-hint text-handwriting">
+          {{ hasDrawnToday ? '今日已签，明天再来吧~' : '点击签筒抽取今日运势' }}
+        </p>
+        
+        <button class="history-btn text-handwriting" @click="fetchHistory">
+          📜 抽签集锦
         </button>
       </div>
       
-    </div>
-    
-    <!-- 状态更新通知 -->
-    <transition name="notification">
-      <div v-if="showNotification" class="status-notification">
-        <span class="notification-emoji">✨</span>
-        <span class="notification-text">{{ notificationText }}</span>
+      <!-- 游客提示 -->
+      <div v-else class="guest-hint-container">
+        <div class="guest-hint-card">
+          <div class="hint-icon">🔒</div>
+          <div class="hint-text text-handwriting">
+            恋爱神社仅对专属人员开放哦~
+          </div>
+          <div class="hint-sub text-handwriting">
+            (快去叫木头来抽签吧！)
+          </div>
+        </div>
       </div>
-    </transition>
+      
+      <!-- 签文弹窗 -->
+      <Transition name="fade">
+        <div v-if="showResult" class="omikuji-result-overlay" @click="closeResult">
+          <div class="omikuji-paper" @click.stop>
+            <div class="paper-header">
+              <div class="shrine-name text-heading">恋爱神社</div>
+              <div class="omikuji-rank text-heading">{{ currentResult.result?.rank }}</div>
+            </div>
+            
+            <div class="paper-body text-handwriting">
+              <!-- 星座与天气 -->
+              <div class="daily-info">
+                <div class="info-tag">
+                  <span class="icon">🌌</span> {{ currentResult.constellation?.name }}
+                </div>
+                <div class="info-tag">
+                  <span class="icon">{{ currentResult.weather?.weather?.split(' ')[0] }}</span> 
+                  {{ currentResult.weather?.temp }}
+                </div>
+              </div>
+              <div class="weather-tip">{{ currentResult.weather?.tip }}</div>
+
+              <div class="omikuji-poem vertical-text">
+                {{ currentResult.result?.poem }}
+              </div>
+              
+              <div class="omikuji-items">
+                <div class="item">
+                  <span class="label">愿望：</span>
+                  <span class="value">{{ currentResult.result?.wish }}</span>
+                </div>
+                <div class="item">
+                  <span class="label">待人：</span>
+                  <span class="value">{{ currentResult.result?.person }}</span>
+                </div>
+                <div class="item">
+                  <span class="label">恋爱：</span>
+                  <span class="value">{{ currentResult.result?.love }}</span>
+                </div>
+              </div>
+              
+              <!-- 彩蛋奖品 -->
+              <div v-if="currentResult.result?.prize" class="special-prize">
+                <div class="prize-title">✨ 获得彩头 ✨</div>
+                <div class="prize-content">{{ currentResult.result.prize }}</div>
+                <div class="prize-note">截图此券向木头兑换</div>
+              </div>
+            </div>
+            
+            <button class="close-btn" @click="closeResult">收入囊中</button>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- 历史记录弹窗 -->
+      <Transition name="fade">
+        <div v-if="showHistoryModal" class="history-overlay" @click="showHistoryModal = false">
+          <div class="history-panel" @click.stop>
+            <h3 class="history-title text-heading">抽签集锦</h3>
+            <div class="history-list">
+              <div v-for="record in historyList" :key="record.id" class="history-item">
+                <div class="history-date">{{ record.date }}</div>
+                <div class="history-rank" :class="getRankClass(record.result.rank)">
+                  {{ record.result.rank }}
+                </div>
+                <div class="history-prize" v-if="record.result.prize">🎁</div>
+              </div>
+            </div>
+            <button class="close-btn small" @click="showHistoryModal = false">关闭</button>
+          </div>
+        </div>
+      </Transition>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { gsap } from 'gsap'
+import { ref, onMounted } from 'vue'
+import { useApi } from '~/composables/useApi'
 
-// 响应式状态
+// 状态管理
+const { api } = useApi()
 const mutouStatus = ref({})
 const qianyuStatus = ref({})
-const statusHistory = ref([])
-const lastUpdate = ref(null)
-const hasLiked = ref(false)
-const showNotification = ref(false)
-const notificationText = ref('')
-const pollingInterval = ref(null)
-const timeUpdateInterval = ref(null)
-const loading = ref(false) // 新增：用于控制快速刷新按钮的加载状态
+const mutouExpanded = ref(false)
+const qianyuExpanded = ref(false)
+const userRole = ref('guest') // 'guest' or 'mutou'
 
-// 状态配置（基于后端文档）
+// 抽签相关
+const isShaking = ref(false)
+const isStickFalling = ref(false)
+const showResult = ref(false)
+const hasDrawnToday = ref(false)
+const currentStickNum = ref(1)
+const currentResult = ref({})
+const showHistoryModal = ref(false)
+const historyList = ref([])
+
+// 状态配置
 const statusConfig = {
-  1: { 
-    id: 1, 
-    name: '睡觉中', 
-    emoji: '😴', 
-    description: '正在做美梦zzz...', 
-    color: '#9B59B6' 
-  },
-  2: { 
-    id: 2, 
-    name: '工作中', 
-    emoji: '💻', 
-    description: '正在努力工作', 
-    color: '#3498DB' 
-  },
-  3: { 
-    id: 3, 
-    name: '运动中', 
-    emoji: '🏃‍♀️', 
-    description: '正在运动💪', 
-    color: '#E74C3C' 
-  },
-  4: { 
-    id: 4, 
-    name: '看B站', 
-    emoji: '📱', 
-    description: '正在刷B站', 
-    color: '#FF69B4' 
-  },
-  5: { 
-    id: 5, 
-    name: '玩游戏', 
-    emoji: '🎮', 
-    description: '在游戏世界里', 
-    color: '#F39C12' 
-  },
-  6: {
-    id: 6,
-    name: '听音乐',
-    emoji: '🎵',
-    description: '正在享受音乐',
-    color: '#1ABC9C'
-  },
-  7: {
-    id: 7,
-    name: '学习中',
-    emoji: '📚',
-    description: '在认真学习',
-    color: '#8E44AD'
-  },
-  8: {
-    id: 8,
-    name: '做饭中',
-    emoji: '👩‍🍳',
-    description: '在准备美食',
-    color: '#E67E22'
-  }
+  1: { name: '安睡', description: '正在梦里抓蝴蝶...' },
+  2: { name: '勤勉', description: '为了买猫粮努力工作中' },
+  3: { name: '锻炼', description: '燃烧卡路里！' },
+  4: { name: '摸鱼', description: '刷B站中，勿扰~' },
+  5: { name: '游戏', description: '在海拉鲁大陆探险' },
+  6: { name: '听歌', description: '陶醉在音乐世界' },
+  7: { name: '学习', description: '好好学习，天天向上' },
+  8: { name: '烹饪', description: '正在制作黑暗料理' }
 }
 
-// 计算属性
-const lastUpdateText = computed(() => {
-  if (!lastUpdate.value) return '暂无更新'
-  return formatLastUpdateTime(lastUpdate.value)
-})
-
-// 生命周期
 onMounted(() => {
+  if (process.client) {
+    userRole.value = localStorage.getItem('user_role') || 'guest'
+  }
+  
   fetchCurrentStatus()
-  startPolling()
-  loadStatusHistory()
-  startTimeUpdate()
+  if (userRole.value === 'mutou') {
+    checkTodayOmikuji()
+  }
+  setInterval(fetchCurrentStatus, 30000)
 })
 
-onUnmounted(() => {
-  stopPolling()
-  stopTimeUpdate()
-})
-
-// 方法
 async function fetchCurrentStatus() {
-  loading.value = true // 开始加载
   try {
-    // 使用API配置文件
-    const { api } = useApi()
-    // 真实的API调用 - 获取所有用户状态（符合前后端交流文档）
-    const response = await fetch(api.baseURL + '/query')
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
-    
-    const data = await response.json()
-    
-    // 处理API响应
-    if (data.users) {
-      // 多用户响应格式 - 符合文档规范
-      const users = data.users
-      
-      // 更新木头状态
-      if (users.木头) {
-        const mutouData = users.木头
-        const statusInfo = statusConfig[mutouData.status]
-        if (statusInfo) {
-          mutouStatus.value = {
-            ...statusInfo,
-            last_update: mutouData.last_update,
-            isOnline: isUserOnline(mutouData.last_update)
-          }
-          addToHistory('木头', mutouData.status, mutouData.last_update)
-        } else {
-          // 如果状态信息不存在，使用默认状态
-          mutouStatus.value = {
-            id: mutouData.status,
-            name: '未知状态',
-            emoji: '❓',
-            description: '状态信息获取中...',
-            color: '#95A5A6',
-            last_update: mutouData.last_update,
-            isOnline: isUserOnline(mutouData.last_update)
-          }
-        }
-      } else {
-        // 如果没有用户数据，设置默认状态
-        mutouStatus.value = {
-          id: '2',
-          name: '离线',
-          emoji: '🔌',
-          description: '连接服务器中...',
-          color: '#95A5A6',
-          last_update: null,
-          isOnline: false
-        }
-      }
-      
-      // 更新乾雨状态
-      if (users.乾雨) {
-        const qianyuData = users.乾雨
-        const statusInfo = statusConfig[qianyuData.status]
-        if (statusInfo) {
-          qianyuStatus.value = {
-            ...statusInfo,
-            last_update: qianyuData.last_update,
-            isOnline: isUserOnline(qianyuData.last_update)
-          }
-          addToHistory('乾雨', qianyuData.status, qianyuData.last_update)
-        } else {
-          // 如果状态信息不存在，使用默认状态
-          qianyuStatus.value = {
-            id: qianyuData.status,
-            name: '未知状态',
-            emoji: '❓',
-            description: '状态信息获取中...',
-            color: '#95A5A6',
-            last_update: qianyuData.last_update,
-            isOnline: isUserOnline(qianyuData.last_update)
-          }
-        }
-      } else {
-        // 如果没有用户数据，设置默认状态
-        qianyuStatus.value = {
-          id: '1',
-          name: '离线',
-          emoji: '🔌',
-          description: '连接服务器中...',
-          color: '#95A5A6',
-          last_update: null,
-          isOnline: false
-        }
-      }
-      
-      lastUpdate.value = new Date(data.timestamp)
-      
-      // 显示连接成功通知（仅首次）
-      if (!mutouStatus.value.id && !qianyuStatus.value.id) {
-        showNotificationMessage('📡 已连接到状态监控服务')
-      }
-      
-    } else if (data.user) {
-      // 单用户响应格式处理（兼容性）
-      console.warn('收到单用户响应格式，建议使用多用户查询接口')
-      const statusInfo = statusConfig[data.status]
-      if (statusInfo && data.user === '木头') {
-        mutouStatus.value = {
-          ...statusInfo,
-          last_update: data.last_update,
-          isOnline: isUserOnline(data.last_update)
-        }
-      } else if (statusInfo && data.user === '乾雨') {
-        qianyuStatus.value = {
-          ...statusInfo,
-          last_update: data.last_update,
-          isOnline: isUserOnline(data.last_update)
-        }
-      }
-      lastUpdate.value = new Date(data.timestamp)
+    const res = await api.get('/api/status/latest')
+    if (res.success) {
+      mutouStatus.value = res.data.mutou
+      qianyuStatus.value = res.data.qianyu
     } else {
-      throw new Error('API响应格式不正确')
+       // Fallback mock
+       mutouStatus.value = { isOnline: true, name: '连接中', description: '正在连接大脑...' }
+       qianyuStatus.value = { isOnline: false, name: '离线', description: '信号丢失...' }
     }
-    
-  } catch (error) {
-    console.error('获取状态失败:', error)
-    
-    // 显示错误通知
-    if (error.message.includes('Failed to fetch')) {
-      showNotificationMessage('🔌 连接服务器失败，使用离线模式')
-    } else {
-      showNotificationMessage(`⚠️ ${error.message}`)
-    }
-    
-    // 网络错误时使用备用数据
-    const fallbackData = {
-      users: {
-        木头: {
-          display_name: '木头',
-          emoji: '🪵',
-          status: '2',
-          name: '工作中',
-          description: '连接服务器中...',
-          color: '#3498DB',
-          last_update: new Date(Date.now() - 300000).toISOString(),
-          isOnline: false
-        },
-        乾雨: {
-          display_name: '乾雨',
-          emoji: '🦅',
-          status: '1',
-          name: '睡觉中',
-          description: '连接服务器中...',
-          color: '#9B59B6',
-          last_update: new Date(Date.now() - 600000).toISOString(),
-          isOnline: false
-        }
-      },
-      timestamp: new Date().toISOString()
-    }
-    
-    // 使用备用数据
-    const users = fallbackData.users
-    
-    // 更新木头状态
-    const mutouData = users.木头
-    const mutouStatusInfo = statusConfig[mutouData.status]
-    if (mutouStatusInfo) {
-      mutouStatus.value = {
-        ...mutouStatusInfo,
-        description: mutouData.description, // 使用备用描述
-        last_update: mutouData.last_update,
-        isOnline: false
-      }
-    }
-    
-    // 更新乾雨状态
-    const qianyuData = users.乾雨
-    const qianyuStatusInfo = statusConfig[qianyuData.status]
-    if (qianyuStatusInfo) {
-      qianyuStatus.value = {
-        ...qianyuStatusInfo,
-        description: qianyuData.description, // 使用备用描述
-        last_update: qianyuData.last_update,
-        isOnline: false
-      }
-    }
-    
-    lastUpdate.value = new Date(fallbackData.timestamp)
-  } finally {
-    loading.value = false // 结束加载
+  } catch (e) {
+    console.error('Status fetch failed', e)
   }
 }
 
-// 新增：判断用户是否在线（基于文档中的在线状态判断逻辑）
-function isUserOnline(lastUpdateTime) {
-  if (!lastUpdateTime || lastUpdateTime === '从未更新') return false
-  
+async function checkTodayOmikuji() {
   try {
-    const lastTime = new Date(lastUpdateTime)
-    const now = new Date()
-    const diffMinutes = (now.getTime() - lastTime.getTime()) / (1000 * 60)
-    
-    // 10分钟内有更新认为在线（符合前后端文档的在线判断逻辑）
-    return diffMinutes <= 10
-  } catch (error) {
-    console.warn('解析最后更新时间失败:', error)
-    return false
-  }
-}
-
-// 新增：获取状态历史的API调用（可选功能，增强历史记录显示）
-async function fetchRecentStatusHistory() {
-  try {
-    const { api } = useApi()
-    const response = await fetch(api.baseURL + '/history')
-    const data = await response.json()
-    
-    if (data.history && Array.isArray(data.history)) {
-      // 只保留最近的5条记录用于显示
-      const recentHistory = data.history.slice(0, 5).map(item => ({
-        user: item.user,
-        status: item.status_id,
-        timestamp: new Date(item.timestamp).getTime(),
-        userName: item.display_name || item.user,
-        userEmoji: item.emoji || getUserEmoji(item.user)
-      }))
-      
-      // 合并到现有历史记录中，去重
-      recentHistory.forEach(newItem => {
-        const existingIndex = statusHistory.value.findIndex(
-          existing => existing.user === newItem.user && 
-                     existing.status === newItem.status &&
-                     Math.abs(existing.timestamp - newItem.timestamp) < 60000 // 1分钟内不重复
-        )
-        
-        if (existingIndex === -1) {
-          statusHistory.value.unshift(newItem)
-        }
-      })
-      
-      // 保持历史记录不超过10条
-      if (statusHistory.value.length > 10) {
-        statusHistory.value = statusHistory.value.slice(0, 10)
-      }
-      
-      // 保存到本地存储
-      localStorage.setItem('statusHistory', JSON.stringify(statusHistory.value))
+    const data = await api.get('/api/omikuji/today')
+    if (data.has_drawn) {
+      hasDrawnToday.value = true
+      currentResult.value = data.record
     }
-  } catch (error) {
-    console.warn('获取状态历史失败:', error)
+  } catch (e) {
+    console.error(e)
   }
 }
 
-function startPolling() {
-  // 每30秒轮询一次状态更新（符合文档建议的轮询频率）
-  pollingInterval.value = setInterval(() => {
-    fetchCurrentStatus()
-    // 同时获取最新的历史记录
-    fetchRecentStatusHistory()
-  }, 30000)
-}
-
-function stopPolling() {
-  if (pollingInterval.value) {
-    clearInterval(pollingInterval.value)
+async function drawOmikuji() {
+  if (userRole.value !== 'mutou') {
+    alert('只有木头才能抽签哦~')
+    return
   }
-}
 
-function startTimeUpdate() {
-  // 每30秒更新一次时间显示
-  timeUpdateInterval.value = setInterval(() => {
-    // 触发计算属性重新计算
-    lastUpdate.value = lastUpdate.value
-  }, 30000)
-}
-
-function stopTimeUpdate() {
-  if (timeUpdateInterval.value) {
-    clearInterval(timeUpdateInterval.value)
-  }
-}
-
-function addToHistory(user, statusId, timestamp) {
-  const timestampMs = new Date(timestamp).getTime()
-  const existingIndex = statusHistory.value.findIndex(
-    item => item.user === user && item.status === statusId && 
-    Math.abs(item.timestamp - timestampMs) < 60000 // 1分钟内不重复添加
-  )
-  
-  if (existingIndex === -1) {
-    statusHistory.value.unshift({
-      user: user,
-      status: statusId,
-      timestamp: timestampMs,
-      userName: user,
-      userEmoji: getUserEmoji(user)
-    })
-    
-    // 只保留最近10条记录
-    if (statusHistory.value.length > 10) {
-      statusHistory.value = statusHistory.value.slice(0, 10)
+  if (isShaking.value || hasDrawnToday.value) {
+    if (hasDrawnToday.value) {
+      showResult.value = true
     }
-    
-    // 保存到本地存储
-    localStorage.setItem('statusHistory', JSON.stringify(statusHistory.value))
-  }
-}
-
-function loadStatusHistory() {
-  const saved = localStorage.getItem('statusHistory')
-  if (saved) {
-    try {
-      statusHistory.value = JSON.parse(saved)
-    } catch (error) {
-      console.error('加载状态历史失败:', error)
-    }
-  }
-}
-
-function getStatusById(id) {
-  return statusConfig[id]
-}
-
-function getUserEmoji(username) {
-  const userEmojis = {
-    '木头': '🪵',
-    '乾雨': '🦅'
-  }
-  return userEmojis[username] || '👤'
-}
-
-function formatTime(timestamp) {
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  
-  // 时间差计算（毫秒）
-  const seconds = Math.floor(diff / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
-  const weeks = Math.floor(days / 7)
-  const months = Math.floor(days / 30)
-  
-  // 未来时间处理
-  if (diff < 0) {
-    return date.toLocaleString('zh-CN', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return
   }
   
-  // 相对时间显示
-  if (seconds < 30) {
-    return '刚刚'
-  } else if (seconds < 60) {
-    return `${seconds}秒前`
-  } else if (minutes < 60) {
-    return `${minutes}分钟前`
-  } else if (hours < 24) {
-    return `${hours}小时前`
-  } else if (days === 1) {
-    return '昨天 ' + date.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  } else if (days < 7) {
-    return `${days}天前`
-  } else if (weeks === 1) {
-    return '1周前'
-  } else if (weeks < 4) {
-    return `${weeks}周前`
-  } else if (months === 1) {
-    return '1个月前'
-  } else if (months < 12) {
-    return `${months}个月前`
-  } else {
-    // 超过一年显示具体日期
-    return date.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-}
-
-// 添加专门的最后更新时间格式化函数
-function formatLastUpdateTime(timestamp) {
-  if (!timestamp) return '从未更新'
-  
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  
-  const minutes = Math.floor(diff / (1000 * 60))
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  
-  if (minutes < 1) {
-    return '刚刚更新'
-  } else if (minutes < 60) {
-    return `${minutes}分钟前更新`
-  } else if (hours < 24) {
-    return `${hours}小时前更新`
-  } else if (days === 1) {
-    return '昨天更新'
-  } else if (days < 30) {
-    return `${days}天前更新`
-  } else {
-    return date.toLocaleDateString('zh-CN', {
-      month: 'short',
-      day: 'numeric'
-    }) + '更新'
-  }
-}
-
-function likeStatus() {
-  hasLiked.value = !hasLiked.value
-  
-  if (hasLiked.value) {
-    showNotificationMessage('已为大家点赞 ❤️')
-    
-    // 点赞动画
-    gsap.fromTo('.like-btn', 
-      { scale: 1 },
-      { 
-        scale: 1.2, 
-        duration: 0.2, 
-        yoyo: true, 
-        repeat: 1,
-        ease: "power2.out"
-      }
-    )
-  }
-}
-
-function showNotificationMessage(message, isError = false) {
-  notificationText.value = message
-  showNotification.value = true
-  
-  // 根据是否为错误改变通知样式
-  if (isError) {
-    document.querySelector('.status-notification')?.classList.add('error')
-  } else {
-    document.querySelector('.status-notification')?.classList.remove('error')
-  }
+  isShaking.value = true
   
   setTimeout(() => {
-    showNotification.value = false
-  }, 3000)
+    isShaking.value = false
+    isStickFalling.value = true
+    currentStickNum.value = Math.floor(Math.random() * 99) + 1
+    
+    api.post('/api/omikuji/draw').then(res => {
+      if (res.success) {
+        currentResult.value = res.data
+        hasDrawnToday.value = true
+        
+        setTimeout(() => {
+          showResult.value = true
+          isStickFalling.value = false
+        }, 1000)
+      }
+    }).catch(err => {
+      isStickFalling.value = false
+      alert(err.message || '抽签失败，请稍后再试')
+    })
+    
+  }, 1500)
 }
 
-function manualRefresh() {
-  fetchCurrentStatus()
-  fetchRecentStatusHistory()
-  showNotificationMessage('状态已刷新')
+async function fetchHistory() {
+  try {
+    const res = await api.get('/api/omikuji/history?user=木头')
+    if (res.success) {
+      historyList.value = res.history
+      showHistoryModal.value = true
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+function toggleMutouExpand() {
+  mutouExpanded.value = !mutouExpanded.value
+  if (mutouExpanded.value) qianyuExpanded.value = false
+}
+
+function toggleQianyuExpand() {
+  qianyuExpanded.value = !qianyuExpanded.value
+  if (qianyuExpanded.value) mutouExpanded.value = false
+}
+
+function formatLastUpdate(time) {
+  if (!time) return ''
+  const date = new Date(time)
+  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} 更新`
+}
+
+function closeResult() {
+  showResult.value = false
+}
+
+function getRankClass(rank) {
+  if (rank.includes('大吉')) return 'rank-best'
+  if (rank.includes('吉')) return 'rank-good'
+  return 'rank-normal'
 }
 </script>
 
 <style scoped lang="scss">
 .status-container {
-  padding: 20px;
+  padding: 40px 20px;
   display: flex;
   justify-content: center;
-  position: relative;
 }
 
-.status-card {
-  padding: 30px;
-  max-width: 800px;
+.omamori-rack {
+  position: relative;
   width: 100%;
-  text-align: center;
-  position: relative;
-}
-
-.status-header {
-  margin-bottom: 30px;
-  
-  .status-title {
-    font-family: var(--font-heading);
-    font-size: 1.3rem;
-    color: white;
-    margin: 0 0 8px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    
-    .status-emoji {
-      margin-right: 8px;
-    }
-    
-    .quick-refresh-btn {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-left: 12px;
-      
-      &:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.2);
-        transform: scale(1.1);
-      }
-      
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-      
-      .refresh-icon {
-        font-size: 1rem;
-        transition: transform 0.3s ease;
-        
-        &.spinning {
-          animation: spin 1s linear infinite;
-        }
-      }
-    }
-  }
-  
-  .last-update {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-}
-
-.dual-status {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 30px;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 16px;
-  }
-}
-
-.user-status {
-  flex: 1;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-  
-  &.breathing {
-    animation: breathing 3s ease-in-out infinite;
-  }
-  
-  .user-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    
-    .user-emoji {
-      font-size: 1.5rem;
-    }
-    
-    .user-name {
-      font-size: 1.1rem;
-      color: white;
-      margin: 0;
-      font-weight: 600;
-    }
-  }
-  
-  .online-indicator {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
-    padding: 2px 6px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    
-    .status-text {
-      font-weight: 500;
-    }
-    
-    &.online {
-      .status-dot {
-        background-color: #4CAF50;
-        animation: pulse-green 2s infinite;
-      }
-      .status-text {
-        color: #4CAF50;
-      }
-    }
-    
-    &.offline {
-      .status-dot {
-        background-color: #757575;
-      }
-      .status-text {
-        color: #757575;
-      }
-    }
-  }
-  
-  // 添加离线状态的整体样式
-  &.offline {
-    opacity: 0.7;
-    filter: grayscale(20%);
-  }
-  
-  @keyframes pulse-green {
-    0% { 
-      box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); 
-    }
-    70% { 
-      box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); 
-    }
-    100% { 
-      box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); 
-    }
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-}
-
-@keyframes breathing {
-  0%, 100% { 
-    transform: scale(1);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-  }
-  50% { 
-    transform: scale(1.02);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-  }
-}
-
-.status-content {
+  max-width: 500px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  position: relative;
 }
 
-.animated-emoji {
-  font-size: 4rem;
-  position: relative;
-  
-  // 不同状态的动画
-  &.emoji-1 { // 睡觉
-    animation: sleeping 3s ease-in-out infinite;
-  }
-  
-  &.emoji-2 { // 工作
-    animation: typing 1s linear infinite;
-  }
-  
-  &.emoji-3 { // 运动
-    animation: running 0.8s linear infinite;
-  }
-  
-  &.emoji-4 { // 看B站
-    animation: browsing 2s ease-in-out infinite;
-  }
-  
-  &.emoji-5 { // 游戏
-    animation: gaming 1.5s ease-in-out infinite;
-  }
-  
-  &.emoji-6 { // 音乐
-    animation: music 2s ease-in-out infinite;
-  }
-  
-  &.emoji-7 { // 学习
-    animation: studying 2.5s ease-in-out infinite;
-  }
-  
-  &.emoji-8 { // 做饭
-    animation: cooking 1.8s ease-in-out infinite;
-  }
-}
-
-// Emoji动画定义
-@keyframes sleeping {
-  0%, 100% { transform: rotate(-5deg) scale(1); }
-  50% { transform: rotate(5deg) scale(1.05); }
-}
-
-@keyframes typing {
-  0%, 50% { transform: scale(1); }
-  25%, 75% { transform: scale(1.1); }
-}
-
-@keyframes running {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes browsing {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1) rotate(5deg); }
-}
-
-@keyframes gaming {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-10deg); }
-  75% { transform: rotate(10deg); }
-}
-
-@keyframes music {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  33% { transform: scale(1.1) rotate(-5deg); }
-  66% { transform: scale(1.1) rotate(5deg); }
-}
-
-@keyframes studying {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.05) rotate(-2deg); }
-}
-
-@keyframes cooking {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-5px) rotate(-5deg); }
-  75% { transform: translateY(-3px) rotate(5deg); }
-}
-
-.status-description {
-  text-align: center;
-  color: white;
-  
-  .status-name {
-    font-size: 1.2rem;
-    margin: 0 0 8px 0;
-    font-weight: 600;
-  }
-  
-  .status-detail {
-    font-size: 0.95rem;
-    margin: 0;
-    opacity: 0.9;
-  }
-}
-
-.status-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+.rope-decoration {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-  animation: pulse-indicator 2s ease-in-out infinite;
+  top: -20px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: #8B4513;
+  border-radius: 2px;
+  
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    width: 14px;
+    height: 14px;
+    background: #8B4513;
+    border-radius: 50%;
+  }
+  
+  &::before { left: 0; }
+  &::after { right: 0; }
 }
 
-@keyframes pulse-indicator {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.7; }
+.omamori-list {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 50px;
+  align-items: flex-start;
+  min-height: 250px;
 }
 
-.status-loading {
+.omamori-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  color: rgba(255, 255, 255, 0.8);
+  transform-origin: top center;
+  z-index: 2;
+}
+
+.omamori-knot {
+  width: 4px;
+  height: 40px;
+  background: #CB4042;
+  margin-bottom: -5px;
+  position: relative;
+  z-index: 2;
   
-  .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(255, 255, 255, 0.2);
-    border-top: 3px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: -8px;
+    width: 20px;
+    height: 10px;
+    border: 2px solid #CB4042;
+    border-radius: 10px;
   }
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.status-history {
-  margin-bottom: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  
-  .history-title {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
-    margin: 0 0 16px 0;
-    text-align: left;
-  }
-  
-  .history-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    font-size: 0.85rem;
-    
-    .history-time {
-      color: rgba(255, 255, 255, 0.6);
-    }
-    
-    .history-status {
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      
-      .history-user {
-        font-size: 0.9rem;
-        margin-right: 2px;
-      }
-      
-      .history-emoji {
-        margin-right: 6px;
-      }
-    }
-  }
-}
-
-.status-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  color: white;
-  font-size: 0.9rem;
+.omamori {
+  width: 100px;
+  height: 160px;
+  position: relative;
+  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
+  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-in-out);
   
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+    transform: scale(1.05);
   }
   
-  &.liked {
-    background: rgba(255, 107, 107, 0.3);
-    border-color: rgba(255, 107, 107, 0.5);
+  &.expanded {
+    height: 240px;
+    width: 140px;
+    transform: translateY(20px);
+    z-index: 10;
+    
+    .omamori-body {
+      width: 140px;
+      height: 200px;
+    }
+    
+    .omamori-top {
+      border-left-width: 70px;
+      border-right-width: 70px;
+    }
+    
+    .omamori-avatar {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 10px;
+    }
+  }
+  
+  &.mutou {
+    .omamori-body { background: var(--accent-blue); }
+    .omamori-top { border-bottom-color: var(--accent-blue); }
+  }
+  
+  &.qianyu {
+    .omamori-body { background: var(--primary-pink); }
+    .omamori-top { border-bottom-color: var(--primary-pink); }
+  }
+  
+  &.online {
+    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
   }
 }
 
-.status-notification {
-  &.error {
-    background: rgba(220, 53, 69, 0.9);
-  }
+.omamori-top {
+  width: 0;
+  height: 0;
+  border-left: 50px solid transparent;
+  border-right: 50px solid transparent;
+  border-bottom: 40px solid #ccc;
+  position: absolute;
+  top: 0;
+  transition: all 0.5s ease;
 }
 
-.status-notification {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 12px 20px;
-  border-radius: 25px;
+.omamori-body {
+  width: 100px;
+  height: 120px;
+  background: #ccc;
+  position: absolute;
+  top: 40px;
+  border-radius: 0 0 10px 10px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
+  padding: 10px;
+  color: white;
+  transition: all 0.5s ease;
+  overflow: hidden;
   
-  .notification-emoji {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255,255,255,0.1),
+    rgba(255,255,255,0.1) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+}
+
+.omamori-label {
+  background: white;
+  color: var(--text-ink);
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+.omamori-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 5px;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: all 0.5s ease;
+  flex-shrink: 0;
+  
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.omamori-status {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.omamori-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  animation: fadeIn 0.5s ease;
+  
+  .detail-status {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .detail-desc {
+    font-size: 0.9rem;
+    text-align: center;
+    opacity: 0.9;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+  
+  .detail-time {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: auto;
+  }
+}
+
+.expand-indicator {
+  margin-top: auto;
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+.omamori-tassel {
+  width: 6px;
+  height: 40px;
+  background: #CB4042;
+  margin-top: -5px;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -7px;
+    width: 20px;
+    height: 20px;
+    background: #CB4042;
+    border-radius: 50% 50% 0 0;
+    clip-path: polygon(0 0, 100% 0, 80% 100%, 20% 100%);
+  }
+}
+
+// 抽签筒样式
+.omikuji-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.omikuji-box {
+  width: 100px;
+  height: 140px;
+  background: #8B4513; // 木质颜色
+  border-radius: 5px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: inset 5px 0 10px rgba(0,0,0,0.3), 5px 5px 15px rgba(0,0,0,0.2);
+  
+  // 木纹
+  background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 10px);
+  
+  &.shaking {
+    animation: shake 0.5s ease-in-out infinite;
+  }
+  
+  &.disabled {
+    opacity: 0.8;
+    cursor: default;
+  }
+}
+
+.omikuji-label {
+  position: absolute;
+  top: 40px;
+  background: white;
+  padding: 5px 15px;
+  writing-mode: vertical-rl;
+  border: 1px solid #333;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.omikuji-hole {
+  position: absolute;
+  top: 0;
+  width: 80%;
+  height: 10px;
+  background: #3e1f08;
+  border-radius: 0 0 10px 10px;
+}
+
+.omikuji-stick {
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 80px;
+  background: #f5deb3;
+  z-index: -1;
+  transition: transform 0.5s ease;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 5px;
+  border: 1px solid #d2b48c;
+  
+  .stick-text {
+    font-size: 0.6rem;
+    writing-mode: vertical-rl;
+    color: #8B4513;
+  }
+  
+  &.falling {
+    animation: stickFall 1s ease-out forwards;
+    z-index: 1;
+  }
+}
+
+.omikuji-hint {
+  margin-top: 10px;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.history-btn {
+  margin-top: 10px;
+  background: transparent;
+  border: 1px dashed var(--text-light);
+  padding: 5px 15px;
+  border-radius: 15px;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 0.9rem;
+  
+  &:hover {
+    background: rgba(0,0,0,0.05);
+  }
+}
+
+// 签文弹窗
+.omikuji-result-overlay, .history-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(5px);
+}
+
+.omikuji-paper {
+  width: 300px;
+  background: #fffdf5;
+  padding: 30px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  // 纸张纹理
+  &::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    border: 2px double #CB4042;
+    pointer-events: none;
+  }
+}
+
+.daily-info {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  
+  .info-tag {
+    background: rgba(165, 154, 202, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: var(--accent-purple);
+  }
+}
+
+.weather-tip {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 5px;
+  text-align: center;
+}
+
+.paper-header {
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #CB4042;
+  padding-bottom: 10px;
+  width: 100%;
+}
+
+.shrine-name {
+  font-size: 1rem;
+  color: var(--text-light);
+  margin-bottom: 5px;
+}
+
+.omikuji-rank {
+  font-size: 2.5rem;
+  color: #CB4042;
+  font-weight: bold;
+}
+
+.paper-body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.omikuji-poem {
+  font-size: 1.2rem;
+  margin: 20px 0;
+  line-height: 1.8;
+  color: var(--text-ink);
+  font-weight: bold;
+}
+
+.vertical-text {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  max-height: 200px;
+}
+
+.omikuji-items {
+  width: 100%;
+  margin-top: 20px;
+  
+  .item {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed #ccc;
+    padding: 8px 0;
+    
+    .label { color: var(--text-light); }
+    .value { font-weight: bold; color: var(--text-ink); }
+  }
+}
+
+.special-prize {
+  margin-top: 20px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid gold;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  width: 100%;
+  
+  .prize-title { color: #d4af37; font-weight: bold; margin-bottom: 5px; }
+  .prize-content { font-size: 1.2rem; font-weight: bold; color: var(--text-ink); }
+  .prize-note { font-size: 0.8rem; color: var(--text-light); margin-top: 5px; }
+}
+
+.history-panel {
+  background: white;
+  width: 320px;
+  max-height: 500px;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  
+  .history-title {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid #eee;
+    
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      
+      .history-date { color: #666; }
+      .history-rank { font-weight: bold; }
+      .rank-best { color: #CB4042; }
+      .rank-good { color: #FF9800; }
+    }
+  }
+}
+
+.close-btn {
+  margin-top: 20px;
+  background: #CB4042;
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  transition: background 0.3s;
+  
+  &:hover { background: #a0282a; }
+  
+  &.small {
+    margin-top: 10px;
+    padding: 5px 20px;
+    font-size: 0.9rem;
+    background: #999;
+  }
+}
+
+// 动画
+@keyframes shake {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(10deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes stickFall {
+  0% { transform: translateY(0); opacity: 0; }
+  100% { transform: translateY(-120px) rotate(20deg); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.guest-hint-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.guest-hint-card {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 20px 30px;
+  border-radius: 12px;
+  border: 2px dashed #e0e0e0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  
+  .hint-icon {
+    font-size: 2rem;
+  }
+  
+  .hint-text {
     font-size: 1.1rem;
-  }
-}
-
-// 过渡动画
-.notification-enter-active,
-.notification-leave-active {
-  transition: all var(--duration-normal) var(--ease-in-out);
-}
-
-.notification-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.notification-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-// 响应式设计
-@media (max-width: 768px) {
-  .status-card {
-    padding: 20px;
+    color: var(--text-ink);
+    font-weight: bold;
   }
   
-  .animated-emoji {
-    font-size: 3rem;
-  }
-  
-  .status-actions {
-    flex-direction: column;
-  }
-  
-  .action-btn {
-    justify-content: center;
+  .hint-sub {
+    font-size: 0.9rem;
+    color: var(--text-light);
   }
 }
 </style>

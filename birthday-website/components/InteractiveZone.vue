@@ -1,35 +1,39 @@
 <template>
   <div class="interactive-container">
     <!-- 留言板区域 -->
-    <div class="glass-card message-board-section">
-      <h3 class="section-title">
-        <span class="section-emoji">💌</span>
-        留言板
+    <div class="message-board-section cork-board">
+      <!-- 软木板纹理 -->
+      <div class="cork-texture"></div>
+      
+      <h3 class="section-title text-heading">
+        <span class="section-emoji">📌</span>
+        留言便利贴
       </h3>
       
       <!-- 留言输入区 -->
-      <div class="message-input-area">
+      <div class="message-input-area sticky-note input-note">
+        <div class="pin-tack"></div>
         <textarea 
           :value="editingMessage ? editingMessage.message : newMessage"
           @input="updateMessage"
-          :placeholder="editingMessage ? '编辑留言...' : '给木头留个小纸条...'"
-          class="message-textarea"
+          :placeholder="editingMessage ? '编辑留言...' : '给木头写张小纸条...'"
+          class="message-textarea text-handwriting"
           @keydown.ctrl.enter="editingMessage ? saveEdit() : sendMessage()"
         />
         <div class="input-buttons">
           <button 
             @click="editingMessage ? saveEdit() : sendMessage()" 
-            class="send-message-btn"
+            class="send-message-btn text-heading"
             :disabled="isLoading"
           >
-            {{ isLoading ? '发送中...' : (editingMessage ? '保存修改 ✅' : '发送小纸条 💌') }}
+            {{ isLoading ? '贴上去...' : (editingMessage ? '保存修改 ✅' : '贴上去 📌') }}
           </button>
           <button 
             v-if="editingMessage"
             @click="cancelEdit()" 
-            class="cancel-btn"
+            class="cancel-btn text-heading"
           >
-            取消编辑
+            取消
           </button>
         </div>
       </div>
@@ -39,96 +43,42 @@
         <div 
           v-for="message in messages" 
           :key="message.id"
-          class="message-note"
+          class="message-note sticky-note"
           :class="{ 'editing': editingMessage && editingMessage.id === message.id }"
           :style="{ 
             backgroundColor: message.color,
             transform: `rotate(${message.rotation}deg)`,
-            top: `${message.y}px`,
-            left: `${message.x}px`
+            top: `${message.y}%`,
+            left: `${message.x}%`
           }"
         >
-          <div class="message-content">{{ message.message }}</div>
-          <div class="message-time">{{ formatMessageTime(message.timestamp) }}</div>
-          <div class="message-actions">
-            <button 
-              @click="editMessage(message)"
-              class="edit-btn"
-              title="编辑"
-            >
-              ✏️
-            </button>
-            <button 
-              @click="deleteMessage(message.id)"
-              class="delete-btn"
-              title="删除"
-            >
-              🗑️
-            </button>
+          <div class="pin-tack"></div>
+          <div class="message-content text-handwriting">{{ message.message }}</div>
+          <div class="message-footer">
+            <div class="message-time">{{ formatMessageTime(message.timestamp) }}</div>
+            <div class="message-actions">
+              <button @click="editMessage(message)" class="action-btn">✏️</button>
+              <button @click="deleteMessage(message.id)" class="action-btn">🗑️</button>
+            </div>
           </div>
         </div>
         
         <!-- 空状态提示 -->
         <div v-if="messages.length === 0" class="empty-state">
           <div class="empty-icon">💌</div>
-          <p class="empty-text">还没有留言哦～给木头留个小纸条吧！</p>
+          <p class="empty-text text-handwriting">还没有留言哦～快来贴第一张！</p>
         </div>
-      </div>
-    </div>
-
-    <!-- 甜蜜时刻照片墙 -->
-    <div class="glass-card photo-gallery-section">
-      <h3 class="section-title">
-        <span class="section-emoji">📸</span>
-        甜蜜时刻
-      </h3>
-      
-      <!-- 照片墙内容 -->
-      <div class="photo-gallery-bg" v-if="displayPhotos.length > 0">
-        <div class="waterfall-container">
-          <div 
-            v-for="(photo, index) in displayPhotos" 
-            :key="photo.id"
-            class="waterfall-item"
-            :style="{
-              animationDelay: `${photo.delay}s`,
-              width: `${photo.width}px`,
-              height: `${photo.height}px`
-            }"
-          >
-            <img 
-              :src="photo.url" 
-              :alt="photo.filename"
-              class="waterfall-image"
-              @load="onImageLoad"
-              @error="onImageError"
-            />
-          </div>
-        </div>
-      </div>
-      
-      <!-- 照片墙空状态 -->
-      <div v-else class="photo-empty-state">
-        <div class="empty-icon">📷</div>
-        <p class="empty-text">暂无照片</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
-import { gsap } from 'gsap'
+import { ref, computed, onMounted } from 'vue'
 import { useApi } from '~/composables/useApi'
-import { usePhotoGallery } from '~/composables/usePhotoGallery'
 
-// API实例 (只用于留言板)
+// API实例
 const { api } = useApi()
-
-// 照片墙功能 (使用本地图片)
-const { photos, hasPhotos, loadPhotos } = usePhotoGallery()
-const displayPhotos = ref([])
-const loadedImagesCount = ref(0)
 
 // 留言板功能
 const newMessage = ref('')
@@ -138,116 +88,22 @@ const isLoading = ref(false)
 
 // 生命周期
 onMounted(async () => {
-  // 加载本地照片
-  await loadPhotos()
-  initPhotoGallery()
-  
-  // 加载留言
   await loadMessages()
 })
-
-// 照片墙方法
-async function initPhotoGallery() {
-  if (!hasPhotos.value || photos.value.length === 0) {
-    console.log('没有找到照片')
-    return
-  }
-  
-  // 为照片墙选择合适数量的照片
-  const neededPhotos = Math.min(photos.value.length, 15) // 限制显示数量
-  
-  displayPhotos.value = photos.value.slice(0, neededPhotos).map((photo, index) => {
-    const baseSize = 160
-    const sizeVariation = Math.random() * 40 - 20
-    const finalSize = Math.max(baseSize + sizeVariation, baseSize * 0.8)
-    
-    return {
-      ...photo,
-      id: `${photo.id}-${index}`,
-      delay: index * 0.1,
-      width: finalSize,
-      height: finalSize * (0.8 + Math.random() * 0.4),
-    }
-  })
-  
-  // 启动照片墙动画
-  nextTick(() => {
-    animatePhotoGallery()
-  })
-}
-
-function animatePhotoGallery() {
-  const items = document.querySelectorAll('.waterfall-item')
-  
-  items.forEach((item, index) => {
-    gsap.set(item, {
-      opacity: 0,
-      y: 50,
-      scale: 0.8,
-      rotation: Math.random() * 20 - 10
-    })
-    
-    gsap.to(item, {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      rotation: 0,
-      duration: 0.6,
-      delay: index * 0.1,
-      ease: "back.out(1.7)",
-      onComplete: () => {
-        // 添加悬停效果
-        item.addEventListener('mouseenter', () => {
-          gsap.to(item, {
-            scale: 1.05,
-            rotation: Math.random() * 10 - 5,
-            duration: 0.3,
-            ease: "power2.out"
-          })
-        })
-        
-        item.addEventListener('mouseleave', () => {
-          gsap.to(item, {
-            scale: 1,
-            rotation: 0,
-            duration: 0.3,
-            ease: "power2.out"
-          })
-        })
-      }
-    })
-    
-    // 持续的浮动动画
-    gsap.to(item, {
-      y: "+=10",
-      duration: 3 + Math.random() * 2,
-      yoyo: true,
-      repeat: -1,
-      ease: "sine.inOut",
-      delay: Math.random() * 2
-    })
-  })
-}
-
-function onImageLoad() {
-  loadedImagesCount.value++
-}
-
-function onImageError(event) {
-  console.warn('图片加载失败:', event.target.src)
-  event.target.style.display = 'none'
-}
 
 // 留言板方法
 async function loadMessages() {
   try {
     const data = await api.getMessages()
+    // 为每条消息生成随机位置和颜色
     messages.value = data.map(msg => ({
       ...msg,
       color: getRandomColor(),
       rotation: Math.random() * 10 - 5,
-      x: Math.random() * 200,
-      y: Math.random() * 100
+      // 随机位置逻辑需要优化，防止重叠过于严重，这里简化处理
+      // 实际应用中可能需要网格布局或更复杂的算法
+      x: Math.random() * 80, // 0-80%
+      y: Math.random() * 80  // 0-80%
     }))
   } catch (error) {
     console.error('加载留言失败:', error)
@@ -273,8 +129,8 @@ async function sendMessage() {
           ...result.data,
           color: getRandomColor(),
           rotation: Math.random() * 10 - 5,
-          x: Math.random() * 200,
-          y: Math.random() * 100
+          x: Math.random() * 60 + 10, // 稍微集中一点
+          y: Math.random() * 60 + 10
         }
         
         messages.value.unshift(message) // 添加到最前面
@@ -290,6 +146,8 @@ async function sendMessage() {
 
 function editMessage(message) {
   editingMessage.value = { ...message }
+  // 滚动到输入框
+  document.querySelector('.message-input-area')?.scrollIntoView({ behavior: 'smooth' })
 }
 
 async function saveEdit() {
@@ -302,11 +160,7 @@ async function saveEdit() {
         if (index !== -1) {
           messages.value[index] = {
             ...messages.value[index],
-            ...result.updated_message,
-            color: messages.value[index].color,
-            rotation: messages.value[index].rotation,
-            x: messages.value[index].x,
-            y: messages.value[index].y
+            ...result.updated_message
           }
           cancelEdit()
         }
@@ -324,12 +178,11 @@ function cancelEdit() {
 }
 
 async function deleteMessage(messageId) {
-  if (confirm('确定要删除这条留言吗？')) {
+  if (confirm('确定要撕掉这张便利贴吗？')) {
     try {
       const result = await api.deleteMessage(messageId)
       if (result && result.success) {
         messages.value = messages.value.filter(m => m.id !== messageId)
-        
         if (editingMessage.value && editingMessage.value.id === messageId) {
           cancelEdit()
         }
@@ -341,10 +194,13 @@ async function deleteMessage(messageId) {
 }
 
 function getRandomColor() {
+  // 柔和的便利贴颜色
   const colors = [
-    '#FFE5E5', '#E5F3FF', '#F0E5FF', '#E5FFE5',
-    '#FFF0E5', '#FFE5F0', '#E5FFF0', '#F0FFE5',
-    '#FFE5CC', '#E5FFCC', '#CCE5FF', '#FFCCF0'
+    '#fff740', // 黄
+    '#ff7eb9', // 粉
+    '#7afcff', // 蓝
+    '#feff9c', // 浅黄
+    '#fff655'  // 柠檬黄
   ]
   return colors[Math.floor(Math.random() * colors.length)]
 }
@@ -364,341 +220,234 @@ function formatMessageTime(timestamp) {
 .interactive-container {
   padding: 20px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
+  justify-content: center;
+  width: 100%;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  padding: 30px;
+.cork-board {
+  position: relative;
   width: 100%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all var(--duration-normal) var(--ease-in-out);
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-  }
+  max-width: 800px;
+  min-height: 600px;
+  background-color: #6d4c41;
+  border: 10px solid #5d4037;
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 10px 20px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.cork-texture {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.2'/%3E%3C/svg%3E");
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .section-title {
-  font-family: var(--font-heading);
-  font-size: 1.3rem;
-  color: white;
-  margin: 0 0 30px 0;
   text-align: center;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 2;
+  font-size: 1.8rem;
+}
+
+.sticky-note {
+  background: #fff740;
+  padding: 15px;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+  position: relative;
+  transition: transform 0.2s;
   
-  .section-emoji {
-    margin-right: 8px;
-    animation: bounce 2s ease-in-out infinite;
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.1) 50%);
+    pointer-events: none;
   }
 }
 
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-10px); }
-  60% { transform: translateY(-5px); }
+.pin-tack {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: #f44336;
+  border-radius: 50%;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  z-index: 5;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 4px;
+    height: 4px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+  }
 }
 
-// 留言板样式
-.message-board-section {
-  max-width: 800px;
-}
-
-.message-input-area {
-  margin-bottom: 30px;
+.input-note {
+  max-width: 400px;
+  margin: 0 auto 40px;
+  transform: rotate(-2deg);
+  z-index: 10;
+  
+  &:hover {
+    transform: rotate(0) scale(1.02);
+    z-index: 20;
+  }
 }
 
 .message-textarea {
   width: 100%;
   min-height: 100px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  color: white;
-  font-size: 0.9rem;
-  resize: vertical;
+  border: none;
+  background: transparent;
+  resize: none;
   outline: none;
-  margin-bottom: 16px;
-  transition: all var(--duration-fast) var(--ease-in-out);
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 10px;
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-  }
-  
-  &:focus {
-    border-color: rgba(255, 182, 193, 0.5);
-    background: rgba(255, 255, 255, 0.15);
+    color: rgba(0,0,0,0.4);
   }
 }
 
 .input-buttons {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.send-message-btn, .cancel-btn {
+  border: none;
+  padding: 5px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.8;
+  }
 }
 
 .send-message-btn {
-  padding: 12px 20px;
-  background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-  border: none;
-  border-radius: 20px;
+  background: #ff4081;
   color: white;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: transform var(--duration-fast) var(--ease-in-out);
-  
-  &:hover:not(:disabled) {
-    transform: scale(1.05);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
 }
 
 .cancel-btn {
-  padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  background: #9e9e9e;
   color: white;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-in-out);
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
 }
 
 .messages-container {
   position: relative;
-  min-height: 300px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  min-height: 400px;
+  // 使用 CSS Grid 或 Flex 在移动端可能更好，这里为了模拟散乱效果使用 absolute
+  // 但为了响应式，我们简单地使用 Grid
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
   padding: 20px;
-  overflow: hidden;
 }
 
 .message-note {
-  position: absolute;
-  max-width: 220px;
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-in-out);
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+  
+  // 覆盖之前的 absolute 定位逻辑，使用 grid 布局更稳健
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
   
   &:hover {
-    transform: scale(1.05) !important;
-    
-    .message-actions {
-      opacity: 1;
-    }
+    transform: scale(1.05) rotate(0deg) !important;
+    z-index: 10;
   }
+}
+
+.message-content {
+  flex: 1;
+  font-size: 1rem;
+  line-height: 1.4;
+  margin-bottom: 10px;
+  word-break: break-all;
+}
+
+.message-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #666;
+  border-top: 1px dashed rgba(0,0,0,0.1);
+  padding-top: 5px;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px;
+  opacity: 0.6;
   
-  &.editing {
-    box-shadow: 0 0 0 2px rgba(255, 182, 193, 0.5);
-    transform: scale(1.02) !important;
-  }
-  
-  .message-content {
-    font-size: 0.9rem;
-    color: #333;
-    margin-bottom: 8px;
-    word-wrap: break-word;
-    line-height: 1.4;
-  }
-  
-  .message-time {
-    font-size: 0.7rem;
-    color: #666;
-    text-align: right;
-    margin-bottom: 8px;
-  }
-  
-  .message-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    opacity: 0;
-    transition: opacity var(--duration-fast) var(--ease-in-out);
-    
-    .edit-btn,
-    .delete-btn {
-      background: none;
-      border: none;
-      font-size: 0.8rem;
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 4px;
-      transition: all var(--duration-fast) var(--ease-in-out);
-      
-      &:hover {
-        background: rgba(0, 0, 0, 0.1);
-      }
-    }
-    
-    .delete-btn:hover {
-      background: rgba(255, 0, 0, 0.1);
-    }
+  &:hover {
+    opacity: 1;
   }
 }
 
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: rgba(255, 255, 255, 0.6);
+  grid-column: 1 / -1;
+  text-align: center;
+  color: rgba(255,255,255,0.8);
+  margin-top: 50px;
   
   .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 16px;
-    opacity: 0.7;
-  }
-  
-  .empty-text {
-    font-size: 1rem;
-    margin: 0;
-    text-align: center;
+    font-size: 4rem;
+    margin-bottom: 10px;
   }
 }
 
-// 照片墙样式
-.photo-gallery-section {
-  max-width: 100%;
-}
-
-.photo-gallery-bg {
-  position: relative;
-  min-height: 300px;
-  overflow: hidden;
-  border-radius: 12px;
-  background: transparent; // 改为透明背景
-  padding: 20px;
-}
-
-.waterfall-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 15px;
-  justify-content: center;
-  align-content: start;
-}
-
-.waterfall-item {
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.15);
-  }
-}
-
-.waterfall-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-  
-  &:hover {
-    transform: scale(1.02);
-  }
-}
-
-.photo-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: rgba(255, 255, 255, 0.6);
-  
-  .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 16px;
-    opacity: 0.7;
-  }
-  
-  .empty-text {
-    font-size: 1rem;
-    margin: 0;
-  }
-}
-
-// 响应式设计
-@media (max-width: 768px) {
-  .interactive-container {
-    padding: 16px;
-    gap: 30px;
-  }
-  
-  .glass-card {
-    padding: 20px;
-  }
-  
-  .waterfall-container {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 12px;
-  }
-  
-  .message-note {
-    max-width: 180px;
-    
-    .message-actions {
-      opacity: 1;
-    }
-  }
-  
-  .input-buttons {
-    flex-direction: column;
-    
-    .send-message-btn,
-    .cancel-btn {
-      width: 100%;
-    }
-  }
-}
-
+// 移动端适配
 @media (max-width: 480px) {
-  .waterfall-container {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  .cork-board {
+    padding: 10px;
+    border-width: 5px;
+  }
+  
+  .messages-container {
+    grid-template-columns: repeat(2, 1fr); // 两列布局
     gap: 10px;
   }
   
   .message-note {
-    max-width: 150px;
-    font-size: 0.8rem;
+    min-height: 120px;
+    padding: 10px;
   }
   
-  .message-textarea {
-    min-height: 80px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .waterfall-container {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 18px;
+  .message-content {
+    font-size: 0.9rem;
   }
 }
 </style>

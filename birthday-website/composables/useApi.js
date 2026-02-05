@@ -2,10 +2,38 @@
 export const useApi = () => {
   // 根据环境自动切换API地址
   const baseURL = process.env.NODE_ENV === 'production' 
-    ? 'http://101.43.113.154:5000'  // 生产环境：替换为您的域名
-    : 'http://101.43.113.154:5000'        // 开发环境：本地API
+    ? 'http://localhost:5000'  // 生产环境
+    : 'http://localhost:5000'  // 开发环境
 
   const api = {
+    // 通用 GET 请求
+    async get(endpoint) {
+      try {
+        const response = await $fetch(`${baseURL}${endpoint}`)
+        return response
+      } catch (error) {
+        console.error(`GET ${endpoint} 失败:`, error)
+        throw error
+      }
+    },
+
+    // 通用 POST 请求
+    async post(endpoint, data) {
+      try {
+        const response = await $fetch(`${baseURL}${endpoint}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+        return response
+      } catch (error) {
+        console.error(`POST ${endpoint} 失败:`, error)
+        throw error
+      }
+    },
+
     // 获取当前状态
     async getStatus() {
       try {

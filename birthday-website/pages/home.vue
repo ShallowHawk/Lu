@@ -106,6 +106,11 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import ScrollLetter from '~/components/ScrollLetter.vue'
 
+// 使用中间件进行路由保护
+definePageMeta({
+  middleware: 'auth'
+})
+
 // 注册插件
 gsap.registerPlugin(ScrollTrigger)
 

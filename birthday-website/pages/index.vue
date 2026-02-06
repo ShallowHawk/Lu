@@ -51,6 +51,11 @@ import { useRouter } from 'vue-router'
 import { useApi } from '~/composables/useApi'
 import ScratchCard from '~/components/ScratchCard.vue'
 
+// 使用中间件防止已登录用户重复登录
+definePageMeta({
+  middleware: 'auth'
+})
+
 const router = useRouter()
 const { api } = useApi()
 

@@ -7,7 +7,7 @@
       <!-- 木头生日倒计时 -->
       <div class="countdown-section">
         <h3 class="countdown-title text-heading">
-          <span class="birthday-emoji">🪵</span>
+          <img :src="`/images/mutou_avatar.jpg?t=${timestamp}`" class="birthday-avatar" alt="木头" />
           木头的破壳日
         </h3>
         
@@ -47,7 +47,7 @@
       <!-- 乾雨生日倒计时 -->
       <div class="countdown-section">
         <h3 class="countdown-title text-heading">
-          <span class="birthday-emoji">🦅</span>
+          <img :src="`/images/qianyu_avatar.jpg?t=${timestamp}`" class="birthday-avatar" alt="乾雨" />
           乾雨的破壳日
         </h3>
         
@@ -91,6 +91,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 // 响应式状态
 const currentTime = ref(new Date())
 const updateInterval = ref(null)
+const timestamp = ref(Date.now())
 
 // 生日日期（出生年份）
 const mutouBirthDate = new Date('2003-07-16T00:00:00') // 木头2003年7月16日
@@ -264,6 +265,15 @@ function calculateCountdownOrAge(birthDate, name) {
   gap: 10px;
   
   .birthday-emoji {
+    animation: bounce 2s ease-in-out infinite;
+  }
+  
+  .birthday-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-pink);
     animation: bounce 2s ease-in-out infinite;
   }
 }

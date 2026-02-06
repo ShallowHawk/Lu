@@ -50,7 +50,10 @@
               <div class="photo-frame">
                 <img :src="photo.src" loading="lazy" />
               </div>
-              <div class="photo-date text-handwriting">{{ photo.date }}</div>
+              <div class="photo-info">
+                <div class="photo-desc text-handwriting" v-if="photo.desc">{{ photo.desc }}</div>
+                <div class="photo-date text-handwriting">{{ photo.date }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -73,21 +76,27 @@ const events = ref([
   },
   {
     date: '2023.02.14',
-    title: '第一个情人节',
-    description: '即使相隔两地，心也是连在一起的。那天晚上的月亮很美。',
-    image: null
+    title: '杭州西湖',
+    description: '我和她一起在杭州西湖，那天晚上的月亮很美。',
+    image: '/images/2023_02_14_17_38_45_IMG_1129_西湖.JPG'
   },
   {
-    date: '2023.07.16',
-    title: '木头的生日',
-    description: '祝全世界最好的木头生日快乐！希望你的每一天都充满阳光。',
-    image: null
+    date: '2023.10.26',
+    title: '迪士尼乐园',
+    description: '是我们第一次去迪士尼，童话般的一天。',
+    image: '/images/2023_10_26_11_37_27_IMG_5974_迪士尼.JPG'
   },
   {
-    date: '2024.01.01',
-    title: '新年快乐',
-    description: '新的一年，也要请多指教哦。一起去看了烟花，真的很开心。',
-    image: null
+    date: '2024.11.02',
+    title: '两周年纪念',
+    description: '是我们在一起两周年，时间过得真快，爱你如初。',
+    image: '/images/2024_11_02_22_57_57_IMG_0669.PNG'
+  },
+  {
+    date: '2025.05.20',
+    title: '宁波之旅',
+    description: '我们在宁波，只要和你在一起，哪里都是风景。',
+    image: '/images/2025_05_20_宁波.jpeg'
   }
 ])
 
@@ -98,10 +107,67 @@ onMounted(async () => {
   await loadPhotos()
   
   if (photos.value.length > 0) {
-    photoList.value = photos.value.map(photo => ({
-      src: photo.url,
-      date: '美好瞬间'
-    }))
+    photoList.value = photos.value.map(photo => {
+      let date = '美好瞬间'
+      let desc = ''
+      
+      const filename = photo.filename || ''
+      
+      // 尝试从文件名解析日期和描述
+      // 格式1: YYYY_MM_DD_HH_MM_SS_ORIGINAL_DESC.ext
+      // 格式2: YYYY_MM_DD_DESC.ext
+      
+      const dateMatch = filename.match(/^(\d{4})_(\d{2})_(\d{2})/)
+      if (dateMatch) {
+        date = `${dateMatch[1]}.${dateMatch[2]}.${dateMatch[3]}`
+        
+        // 移除扩展名
+        let nameBody = filename.substring(0, filename.lastIndexOf('.'))
+        
+        // 移除日期部分 (YYYY_MM_DD)
+        nameBody = nameBody.replace(/^\d{4}_\d{2}_\d{2}/, '')
+        
+        // 移除时间部分 (_HH_MM_SS)
+        nameBody = nameBody.replace(/^_\d{2}_\d{2}_\d{2}/, '')
+        
+        // 移除 IMG_XXXX / DSCXXXX 等常见相机前缀
+        // 匹配 _IMG_1234, IMG_1234, _DSC1234 等
+        nameBody = nameBody.replace(/_?(IMG|DSC|Screenshot)_?\d+/i, '')
+        
+        // 移除 UUID 风格的字符串 (如果混入)
+        nameBody = nameBody.replace(/_?[0-9a-f]{8}-[0-9a-f]{4}-.*/i, '')
+
+        // 清理开头和结尾的下划线或空格
+        desc = nameBody.replace(/^[_ ]+|[_ ]+$/g, '')
+        
+        // 如果这时候 desc 还是空的，尝试找一下有没有连在一起的中文
+        if (!desc) {
+             const originalName = filename.substring(0, filename.lastIndexOf('.'))
+             const chineseMatch = originalName.match(/[\u4e00-\u9fa5]+/)
+             if (chineseMatch) {
+                 desc = chineseMatch[0]
+             }
+        }
+      }
+
+      // 特殊覆盖逻辑 (保持旧的或者特定的)
+      if (filename.includes('IMG_0510')) { date = '2022.11.11'; desc = '初冬的暖阳' }
+      else if (filename.includes('IMG_0545')) { date = '2022.11.12'; desc = '和你一起的街头' }
+      
+      return {
+        src: photo.url,
+        date: date,
+        desc: desc
+      }
+    })
+    
+    // 按日期排序 (倒序，最新的在前面)
+    photoList.value.sort((a, b) => {
+      if (a.date === '美好瞬间') return 1
+      if (b.date === '美好瞬间') return -1
+      return b.date.localeCompare(a.date)
+    })
+    
   } else {
     // Fallback if no photos loaded
     const demoPhotos = [
@@ -344,9 +410,22 @@ onMounted(async () => {
   }
 }
 
+.photo-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.photo-desc {
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: bold;
+}
+
 .photo-date {
   text-align: right;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #888;
 }
 

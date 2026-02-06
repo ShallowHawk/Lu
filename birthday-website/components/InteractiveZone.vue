@@ -13,6 +13,14 @@
       <!-- 留言输入区 -->
       <div class="message-input-area sticky-note input-note">
         <div class="pin-tack"></div>
+        <div class="user-info-input">
+          <label class="user-label">我是：</label>
+          <input 
+            v-model="userName" 
+            placeholder="你的名字" 
+            class="name-input text-handwriting"
+          />
+        </div>
         <textarea 
           :value="editingMessage ? editingMessage.message : newMessage"
           @input="updateMessage"
@@ -53,7 +61,10 @@
           }"
         >
           <div class="pin-tack"></div>
-          <div class="message-content text-handwriting">{{ message.message }}</div>
+          <div class="message-content text-handwriting">
+            <span class="message-user">{{ message.user }}:</span>
+            {{ message.message }}
+          </div>
           <div class="message-footer">
             <div class="message-time">{{ formatMessageTime(message.timestamp) }}</div>
             <div class="message-actions">
@@ -82,12 +93,17 @@ const { api } = useApi()
 
 // 留言板功能
 const newMessage = ref('')
+const userName = ref('') // 用户名字
 const messages = ref([])
 const editingMessage = ref(null)
 const isLoading = ref(false)
 
 // 生命周期
 onMounted(async () => {
+  // 尝试从本地存储获取上次的名字
+  const savedName = localStorage.getItem('visitor_name')
+  if (savedName) userName.value = savedName
+  
   await loadMessages()
 })
 
@@ -122,8 +138,14 @@ function updateMessage(event) {
 async function sendMessage() {
   if (newMessage.value.trim()) {
     isLoading.value = true
+    
+    // 保存名字到本地
+    if (userName.value) {
+      localStorage.setItem('visitor_name', userName.value)
+    }
+
     try {
-      const result = await api.sendMessage(newMessage.value)
+      const result = await api.sendMessage(newMessage.value, userName.value || '神秘访客')
       if (result && result.success) {
         const message = {
           ...result.data,
@@ -329,6 +351,39 @@ function formatMessageTime(timestamp) {
   }
 }
 
+.user-info-input {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  
+  .user-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin-right: 5px;
+  }
+  
+  .name-input {
+    border: none;
+    border-bottom: 1px dashed #999;
+    background: transparent;
+    padding: 2px 5px;
+    font-size: 1rem;
+    color: #333;
+    width: 120px;
+    outline: none;
+    
+    &:focus {
+      border-bottom-color: #ff4081;
+    }
+  }
+}
+
+.message-user {
+  font-weight: bold;
+  color: #d84315;
+  margin-right: 5px;
+  font-size: 0.95rem;
+}
 .input-buttons {
   display: flex;
   gap: 10px;

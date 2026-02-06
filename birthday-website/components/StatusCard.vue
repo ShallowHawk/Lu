@@ -18,7 +18,7 @@
             <div class="omamori-body">
               <div class="omamori-label text-heading">木头</div>
               <div class="omamori-avatar">
-                <img src="/images/mutou_avatar.jpg" alt="木头" class="avatar-img" />
+                <img :src="`/images/mutou_avatar.jpg?t=${timestamp}`" alt="木头" class="avatar-img" />
               </div>
               
               <!-- 默认显示状态名 -->
@@ -52,7 +52,7 @@
             <div class="omamori-body">
               <div class="omamori-label text-heading">乾雨</div>
               <div class="omamori-avatar">
-                <img src="/images/qianyu_avatar.jpg" alt="乾雨" class="avatar-img" />
+                <img :src="`/images/qianyu_avatar.jpg?t=${timestamp}`" alt="乾雨" class="avatar-img" />
               </div>
               
               <div class="omamori-status text-handwriting" v-if="!qianyuExpanded">
@@ -153,7 +153,7 @@
               <div v-if="currentResult.result?.prize" class="special-prize">
                 <div class="prize-title">✨ 获得彩头 ✨</div>
                 <div class="prize-content">{{ currentResult.result.prize }}</div>
-                <div class="prize-note">截图此券向木头兑换</div>
+                <div class="prize-note">截图此券向乾雨兑换</div>
               </div>
             </div>
             
@@ -195,6 +195,7 @@ const qianyuStatus = ref({})
 const mutouExpanded = ref(false)
 const qianyuExpanded = ref(false)
 const userRole = ref('guest') // 'guest' or 'mutou'
+const timestamp = ref(Date.now())
 
 // 抽签相关
 const isShaking = ref(false)

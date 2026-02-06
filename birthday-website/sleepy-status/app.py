@@ -8,7 +8,8 @@ import os
 import json
 
 app = Flask(__name__)
-CORS(app)
+# Allow CORS for all domains, or restrict to specific ones
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Database Configuration
 # Use environment variables for DB config
@@ -73,7 +74,7 @@ def init_db():
             
             # Create default status
             if not Status.query.filter_by(user_key='mutou').first():
-                db.session.add(Status(user_key='mutou', name='安睡', description='呼呼大睡中...', is_online=True))
+                db.session.add(Status(user_key='mutou', name='安睡', description='呼呼大睡中...', is_online=False))
             if not Status.query.filter_by(user_key='qianyu').first():
                 db.session.add(Status(user_key='qianyu', name='想你', description='正在想念木头...', is_online=True))
             
@@ -118,7 +119,73 @@ def get_constellation(name='双子座'):
         pass
     return {'name': name, 'luck': '⭐⭐⭐⭐⭐', 'desc': '今日运势爆棚，诸事顺遂！'}
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user = db.Column(db.String(50))
+    content = db.Column(db.Text)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+
 # --- Routes ---
+
+@app.route('/api/messages', methods=['GET'])
+def get_messages():
+    messages = Message.query.order_by(Message.date.desc()).all()
+    return jsonify({
+        'success': True,
+        'messages': [{
+            'id': m.id,
+            'user': m.user,
+            'content': m.content,
+            'date': m.date.isoformat()
+        } for m in messages]
+    })
+
+@app.route('/api/messages/send', methods=['POST'])
+def send_message():
+    data = request.json
+    content = data.get('message')
+    user = data.get('user', '访客')
+    
+    if not content:
+        return jsonify({'success': False, 'message': 'Content is required'})
+        
+    msg = Message(user=user, content=content)
+    db.session.add(msg)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Message sent'})
+
+@app.route('/api/messages/update', methods=['POST'])
+def update_message():
+    data = request.json
+    secret = data.get('secret')
+    if secret != 'birthday2024':
+        return jsonify({'success': False, 'message': 'Invalid secret'})
+        
+    msg_id = data.get('message_id')
+    content = data.get('message')
+    
+    msg = Message.query.get(msg_id)
+    if msg:
+        msg.content = content
+        db.session.commit()
+        return jsonify({'success': True})
+    return jsonify({'success': False, 'message': 'Message not found'})
+
+@app.route('/api/messages/delete', methods=['POST'])
+def delete_message():
+    data = request.json
+    secret = data.get('secret')
+    if secret != 'birthday2024':
+        return jsonify({'success': False, 'message': 'Invalid secret'})
+        
+    msg_id = data.get('message_id')
+    msg = Message.query.get(msg_id)
+    if msg:
+        db.session.delete(msg)
+        db.session.commit()
+        return jsonify({'success': True})
+    return jsonify({'success': False, 'message': 'Message not found'})
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -135,21 +202,54 @@ def get_status():
     mutou = Status.query.filter_by(user_key='mutou').first()
     qianyu = Status.query.filter_by(user_key='qianyu').first()
     
+    # Auto-switch to "Missing You" if inactive for > 10 minutes
+    now = datetime.utcnow()
+    
+    mutou_data = {
+        'name': '未知', 'description': '', 'isOnline': False, 'last_update': None
+    }
+    if mutou:
+        time_diff = (now - mutou.last_update).total_seconds()
+        if time_diff > 600: # 10 minutes
+            mutou_data = {
+                'name': '想你',
+                'description': '正在想念乾雨...', # Default fallback
+                'isOnline': True, # Keep online status or set to False as preferred
+                'last_update': mutou.last_update.isoformat()
+            }
+        else:
+            mutou_data = {
+                'name': mutou.name,
+                'description': mutou.description,
+                'isOnline': mutou.is_online,
+                'last_update': mutou.last_update.isoformat()
+            }
+            
+    qianyu_data = {
+        'name': '未知', 'description': '', 'isOnline': False, 'last_update': None
+    }
+    if qianyu:
+        time_diff = (now - qianyu.last_update).total_seconds()
+        if time_diff > 600:
+            qianyu_data = {
+                'name': '想你',
+                'description': '正在想念木头...',
+                'isOnline': True,
+                'last_update': qianyu.last_update.isoformat()
+            }
+        else:
+            qianyu_data = {
+                'name': qianyu.name,
+                'description': qianyu.description,
+                'isOnline': qianyu.is_online,
+                'last_update': qianyu.last_update.isoformat()
+            }
+
     return jsonify({
         'success': True,
         'data': {
-            'mutou': {
-                'name': mutou.name if mutou else '未知',
-                'description': mutou.description if mutou else '',
-                'isOnline': mutou.is_online if mutou else False,
-                'last_update': mutou.last_update.isoformat() if mutou else None
-            },
-            'qianyu': {
-                'name': qianyu.name if qianyu else '未知',
-                'description': qianyu.description if qianyu else '',
-                'isOnline': qianyu.is_online if qianyu else False,
-                'last_update': qianyu.last_update.isoformat() if qianyu else None
-            }
+            'mutou': mutou_data,
+            'qianyu': qianyu_data
         }
     })
 
@@ -200,7 +300,7 @@ def draw_omikuji():
         '身无彩凤双飞翼，心有灵犀一点通。',
         '今夕何夕，见此良人。'
     ]
-    prizes = ['奶茶一杯', '按摩券一张', '看电影一次', '清空购物车(限额100)', '抱抱一个', None, None, None]
+    prizes = ['奶茶一杯', '按摩券一张', '看电影一次', '清空购物车(限额100)', '抱抱一个', '乾雨一日体验券', '乾雨亲亲一个', '乾雨陪玩券']
     
     rank = random.choice(ranks)
     poem = random.choice(poems)

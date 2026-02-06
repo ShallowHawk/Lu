@@ -1,314 +1,260 @@
 <template>
-  <div class="home-page">
-    <!-- Loading 层 -->
-    <LoadingScreen 
-      v-if="isLoading" 
-      @loading-complete="handleLoadingComplete"
-    />
-    
-    <!-- 主内容 -->
-    <div v-else class="main-content">
-      <!-- 头部留白，给紫藤花 -->
-      <div class="header-spacer"></div>
+  <div class="login-container">
+    <div class="login-card wafu-card">
+      <div class="card-decoration">🌸</div>
+      <h2 class="login-title text-heading">开启我们的故事</h2>
       
-      <!-- Tab 内容区域 -->
-      <Transition name="fade-slide" mode="out-in">
-        <!-- 首页 Tab -->
-        <div v-if="currentTab === 'home'" key="home" class="tab-content">
-          <!-- 恋爱时光机 -->
-          <section class="section love-timer scroll-reveal">
-            <LoveTimer />
-          </section>
-          
-          <!-- 状态展示卡片 -->
-          <section class="section status-display scroll-reveal">
-            <div class="section-title-wrapper">
-              <h3 class="section-title text-heading">
-                <span class="decoration-line"></span>
-                灵力与运势
-                <span class="decoration-line"></span>
-              </h3>
-            </div>
-            <StatusCard />
-          </section>
-          
-          <!-- 生日倒计时 -->
-          <section class="section birthday-countdown scroll-reveal">
-            <div class="section-title-wrapper">
-              <h3 class="section-title text-heading">
-                <span class="decoration-line"></span>
-                庆典倒计时
-                <span class="decoration-line"></span>
-              </h3>
-            </div>
-            <BirthdayCountdown />
-          </section>
+      <div class="login-form">
+        <div class="input-group">
+          <label class="input-label text-handwriting">请输入专属暗号</label>
+          <input 
+            v-model="password" 
+            type="password" 
+            class="secret-input" 
+            placeholder="✨✨✨✨✨✨"
+            @keyup.enter="handleLogin"
+          />
+        </div>
+
+        <!-- 刮刮卡提示区域 -->
+        <div class="scratch-area" v-if="showScratch">
+          <div class="scratch-label text-handwriting">👇 刮开获取提示 👇</div>
+          <div class="scratch-wrapper">
+            <ScratchCard :width="280" :height="50" coverColor="#e0e0e0" :brushSize="15">
+               <div class="hint-content text-heading">
+                 睡前必说的缩写(大写)+你的锁屏密码
+               </div>
+            </ScratchCard>
+          </div>
         </div>
         
-        <!-- 时光 Tab -->
-        <div v-else-if="currentTab === 'timeline'" key="timeline" class="tab-content">
-          <section class="section timeline">
-            <DynamicTimeline />
-          </section>
-        </div>
+        <button class="login-btn btn-primary" @click="handleLogin" :disabled="loading">
+          {{ loading ? '芝麻开门中...' : '芝麻开门' }}
+        </button>
         
-        <!-- 留言 Tab -->
-        <div v-else-if="currentTab === 'message'" key="message" class="tab-content">
-          <section class="section interactive">
-            <InteractiveZone />
-          </section>
-        </div>
-      </Transition>
-      
-      <!-- 底部留白 -->
-      <div class="footer-spacer"></div>
-    </div>
-    
-    <!-- 移动端底部导航 -->
-    <div class="mobile-nav" v-if="!isLoading">
-      <div 
-        class="nav-item" 
-        :class="{ active: currentTab === 'home' }"
-        @click="currentTab = 'home'"
-      >
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label" v-if="currentTab === 'home'">首页</span>
-      </div>
-      <div 
-        class="nav-item" 
-        :class="{ active: currentTab === 'timeline' }"
-        @click="currentTab = 'timeline'"
-      >
-        <span class="nav-icon">📸</span>
-        <span class="nav-label" v-if="currentTab === 'timeline'">时光</span>
-      </div>
-      <div 
-        class="nav-item" 
-        :class="{ active: currentTab === 'message' }"
-        @click="currentTab = 'message'"
-      >
-        <span class="nav-icon">💌</span>
-        <span class="nav-label" v-if="currentTab === 'message'">留言</span>
+        <div class="divider text-handwriting">或者</div>
+        
+        <button class="guest-btn text-handwriting" @click="handleGuestLogin">
+          我是朋友，来送祝福 🎁
+        </button>
       </div>
     </div>
     
-    <!-- 生日庆典模式覆盖层 -->
-    <BirthdayModal v-if="isBirthdayToday" />
+    <!-- 烟花特效容器 -->
+    <div v-if="showFireworks" class="fireworks-container"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useApi } from '~/composables/useApi'
+import ScratchCard from '~/components/ScratchCard.vue'
 
-// 注册插件
-gsap.registerPlugin(ScrollTrigger)
+const router = useRouter()
+const { api } = useApi()
 
-// 响应式状态
-const isLoading = ref(true)
-const currentDate = ref(new Date())
-const currentTab = ref('home')
+const password = ref('')
+const loading = ref(false)
+const showFireworks = ref(false)
+const loginAttempts = ref(0)
+const showScratch = ref(false)
 
-// 计算属性
-const isBirthdayToday = computed(() => {
-  const today = currentDate.value
-  const month = today.getMonth() + 1
-  const date = today.getDate()
-  return (month === 7 && date === 15) || (month === 7 && date === 16) || (month === 7 && date === 27)
-})
-
-// 生命周期
-onMounted(() => {
-  updateCurrentTime()
-})
-
-// 监听 Tab 切换，重新初始化动画
-watch(currentTab, () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-  nextTick(() => {
-    initScrollAnimations()
-  })
-})
-
-// 方法
-function handleLoadingComplete() {
-  isLoading.value = false
-  // 等待DOM更新后初始化滚动动画
-  nextTick(() => {
-    initScrollAnimations()
-  })
-}
-
-function initScrollAnimations() {
-  const sections = document.querySelectorAll('.scroll-reveal')
+async function handleLogin() {
+  if (!password.value) return
   
-  // 清除旧的 ScrollTrigger
-  ScrollTrigger.getAll().forEach(st => st.kill())
-  
-  sections.forEach((section, index) => {
-    gsap.fromTo(section, 
-      { 
-        opacity: 0, 
-        y: 30,
-        filter: 'blur(5px)'
-      },
-      {
-        opacity: 1,
-        y: 0,
-        filter: 'blur(0px)',
-        duration: 0.8,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: section,
-          start: "top 85%", 
-          toggleActions: "play none none reverse"
-        }
+  loading.value = true
+  try {
+    const res = await api.post('/api/login', { password: password.value })
+    
+    if (res.success) {
+      // 登录成功
+      localStorage.setItem('auth_token', res.token)
+      localStorage.setItem('user_role', 'mutou')
+      
+      // 播放特效
+      showFireworks.value = true
+      setTimeout(() => {
+        router.push('/home')
+      }, 2000)
+    } else {
+      loginAttempts.value++
+      if (loginAttempts.value >= 1) {
+        showScratch.value = true
       }
-    )
-  })
+      alert('暗号不对哦，是不是走错门啦？')
+    }
+  } catch (error) {
+    console.error(error)
+    alert('服务器开小差了，请稍后再试')
+  } finally {
+    loading.value = false
+  }
 }
 
-function updateCurrentTime() {
-  currentDate.value = new Date()
-  setTimeout(updateCurrentTime, 60000)
+function handleGuestLogin() {
+  localStorage.setItem('user_role', 'guest')
+  router.push('/home')
 }
 </script>
 
 <style scoped lang="scss">
-.home-page {
-  position: relative;
+.login-container {
   min-height: 100vh;
-}
-
-.main-content {
-  position: relative;
-  z-index: 2;
-  padding: 0 16px;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.header-spacer {
-  height: 80px;
-}
-
-.footer-spacer {
-  height: 120px; // 增加底部空间
-}
-
-.section {
-  margin-bottom: 40px;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.section-title-wrapper {
-  text-align: center;
-  margin-bottom: 30px;
-  
-  .section-title {
-    font-size: 1.5rem;
-    color: var(--text-ink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    
-    .decoration-line {
-      width: 40px;
-      height: 2px;
-      background: var(--primary-pink);
-      position: relative;
-      
-      &::after {
-        content: '';
-        position: absolute;
-        top: -4px;
-        right: 0;
-        width: 10px;
-        height: 10px;
-        background: var(--primary-pink);
-        border-radius: 50%;
-        opacity: 0.5;
-      }
-      
-      &:first-child::after {
-        left: 0;
-        right: auto;
-      }
-    }
-  }
-}
-
-.mobile-nav {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
-  padding: 8px 10px;
-  border-radius: 40px;
   display: flex;
-  gap: 15px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-paper);
+  background-image: 
+    radial-gradient(#e6e6e6 1px, transparent 1px),
+    radial-gradient(#e6e6e6 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  padding: 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px 30px;
+  text-align: center;
+  position: relative;
   
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 8px 15px;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    opacity: 0.6;
-    
-    .nav-icon {
-      font-size: 1.4rem;
-    }
-    
-    .nav-label {
-      font-size: 0.9rem;
-      font-weight: bold;
-      color: var(--text-ink);
-      white-space: nowrap;
-    }
-    
-    &.active {
-      background: #FFE4E1; // 浅粉色背景
-      opacity: 1;
-      transform: scale(1.05);
-      
-      .nav-icon {
-        transform: scale(1.1);
-      }
-    }
-    
-    &:hover:not(.active) {
-      background: rgba(0,0,0,0.05);
-      opacity: 0.8;
-    }
+  .card-decoration {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    font-size: 3rem;
+    animation: float 3s ease-in-out infinite;
   }
 }
 
-// Tab 切换动画
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.4s ease;
+.login-title {
+  font-size: 2rem;
+  color: var(--text-ink);
+  margin-bottom: 40px;
 }
 
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-20px);
+.input-group {
+  text-align: left;
+  
+  .input-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-light);
+    font-size: 1.1rem;
+  }
+}
+
+.scratch-area {
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  animation: fadeIn 0.5s ease;
+}
+
+.scratch-label {
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.scratch-wrapper {
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f9f9f9;
+}
+
+.hint-content {
+  color: var(--text-ink);
+  font-size: 0.9rem;
+  padding: 0 10px;
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.secret-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  text-align: center;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: monospace;
+  letter-spacing: 4px;
+  
+  &:focus {
+    border-color: var(--primary-pink);
+    box-shadow: 0 0 0 3px rgba(240, 145, 153, 0.2);
+  }
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.divider {
+  position: relative;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin: 10px 0;
+  
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: #e0e0e0;
+  }
+  
+  &::before { left: 0; }
+  &::after { right: 0; }
+}
+
+.guest-btn {
+  background: none;
+  border: 2px dashed var(--text-light);
+  color: var(--text-light);
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: var(--primary-green);
+    color: var(--primary-green);
+    background: rgba(136, 176, 75, 0.1);
+  }
+}
+
+.fireworks-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 999;
+  background: rgba(255, 255, 255, 0.2);
+  // 这里可以后续接入 canvas 烟花库
 }
 </style>

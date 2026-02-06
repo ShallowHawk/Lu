@@ -7,7 +7,7 @@ import win32api
 import os
 
 # --- 配置区域 ---
-SERVER_URL = "http://101.43.113.154/api/status/update" # 替换为你的服务器IP/域名
+SERVER_URL = "https://wildmutou.art/api/status/update" # 替换为你的服务器IP/域名
 SECRET = "my_love_secret_2024"
 USER_KEY = "mutou"
 
@@ -16,6 +16,8 @@ APP_RULES = {
     "code": ("勤勉", "正在写代码改变世界..."),
     "idea": ("勤勉", "Java 是世界上最好的语言"),
     "pycharm": ("勤勉", "Python 使得"),
+    "webstorm": ("勤勉", "正在写前端"),
+    "cursor": ("勤勉", "AI 辅助编程中"),
     "chrome": ("摸鱼", "网上冲浪中..."),
     "firefox": ("摸鱼", "网上冲浪中..."),
     "edge": ("摸鱼", "网上冲浪中..."),
@@ -25,10 +27,11 @@ APP_RULES = {
     "potplayer": ("看剧", "正在看视频"),
     "vlc": ("看剧", "正在看视频"),
     "steam": ("游戏", "Steam启动！"),
-    "league of legends": ("游戏", "LOL中，勿扰"),
+    "league of legends": ("游戏", "LOL中，回复不及时"),
     "genshin": ("游戏", "原神，启动！"),
     "wechat": ("聊天", "微信摸鱼中"),
-    "dingtalk": ("搬砖", "正在钉钉搬砖"),
+    "dingtalk": ("搬砖", "为了我们以后更好的生活"),
+    "feishu": ("搬砖", "为了我们以后更好的生活"),
 }
 
 # 闲置判定时间 (秒)
@@ -101,10 +104,16 @@ def main():
             # 1. 检测闲置
             idle_seconds = get_idle_duration()
             if idle_seconds > IDLE_THRESHOLD:
-                if last_status_key != "idle":
-                    update_status("发呆", f"已离开电脑 {int(idle_seconds/60)} 分钟")
-                    last_status_key = "idle"
-                time.sleep(10) # 闲置时降低检测频率
+                # 闲置超过阈值，不发送任何状态，让服务器自动判定超时进入 "想你" 状态
+                # 或者发送一个 "Idle" 状态 (如果需要显示离开多久)
+                # 根据需求：用户希望超时后自动变为"想你"
+                # 所以这里我们停止发送更新即可，或者发送心跳但标记为idle?
+                # 简单做法：停止发送，让服务器timeout
+                if last_status_key != "idle_silent":
+                    print(f"[{time.strftime('%H:%M:%S')}] 进入闲置模式，停止推送状态...")
+                    last_status_key = "idle_silent"
+                
+                time.sleep(60) # 闲置时大幅降低检测频率
                 continue
 
             # 2. 检测活动窗口

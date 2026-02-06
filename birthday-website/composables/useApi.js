@@ -1,15 +1,22 @@
 // API配置文件
 export const useApi = () => {
-  // 根据环境自动切换API地址
-  const baseURL = process.env.NODE_ENV === 'production' 
-    ? 'http://localhost:5000'  // 生产环境
-    : 'http://localhost:5000'  // 开发环境
+  // 生产环境 API 地址
+  const baseURL = 'https://wildmutou.art/api'
+  
+  // 本地开发时，如果需要调试本地后端，可以临时改为 'http://localhost:5000'
+  // 但目前需求是直接连线上，所以保持不变
+  
+  const headers = {
+    'Content-Type': 'application/json',
+  }
 
   const api = {
     // 通用 GET 请求
     async get(endpoint) {
       try {
-        const response = await $fetch(`${baseURL}${endpoint}`)
+        // endpoint 如果自带 /api 前缀则去除，避免重复
+        const cleanEndpoint = endpoint.startsWith('/api') ? endpoint.replace('/api', '') : endpoint
+        const response = await $fetch(`${baseURL}${cleanEndpoint}`)
         return response
       } catch (error) {
         console.error(`GET ${endpoint} 失败:`, error)
@@ -20,7 +27,8 @@ export const useApi = () => {
     // 通用 POST 请求
     async post(endpoint, data) {
       try {
-        const response = await $fetch(`${baseURL}${endpoint}`, {
+        const cleanEndpoint = endpoint.startsWith('/api') ? endpoint.replace('/api', '') : endpoint
+        const response = await $fetch(`${baseURL}${cleanEndpoint}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -76,7 +84,7 @@ export const useApi = () => {
     // 获取留言板消息
     async getMessages() {
       try {
-        const response = await $fetch(`${baseURL}/api/messages`)
+        const response = await this.get('/messages') // 复用 this.get 自动处理 baseURL
         return response.messages || []
       } catch (error) {
         console.error('获取留言失败:', error)
@@ -85,17 +93,11 @@ export const useApi = () => {
     },
 
     // 发送留言
-    async sendMessage(content) {
+    async sendMessage(content, user = '访客') {
       try {
-        const response = await $fetch(`${baseURL}/api/messages/send`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ 
-            message: content,
-            user: '木头' // 默认用户，可以根据需要修改
-          })
+        const response = await this.post('/messages/send', {
+          message: content,
+          user: user
         })
         return response
       } catch (error) {
@@ -107,16 +109,10 @@ export const useApi = () => {
     // 更新留言
     async updateMessage(messageId, content) {
       try {
-        const response = await $fetch(`${baseURL}/api/messages/update`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ 
-            message_id: messageId,
-            message: content,
-            secret: 'birthday2024' // 添加密钥
-          })
+        const response = await this.post('/messages/update', {
+          message_id: messageId,
+          message: content,
+          secret: 'birthday2024' // 添加密钥
         })
         return response
       } catch (error) {
@@ -128,15 +124,9 @@ export const useApi = () => {
     // 删除留言
     async deleteMessage(messageId) {
       try {
-        const response = await $fetch(`${baseURL}/api/messages/delete`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ 
-            message_id: messageId,
-            secret: 'birthday2024' // 添加密钥
-          })
+        const response = await this.post('/messages/delete', {
+          message_id: messageId,
+          secret: 'birthday2024' // 添加密钥
         })
         return response
       } catch (error) {

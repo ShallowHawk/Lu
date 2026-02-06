@@ -152,8 +152,10 @@ function handleLoadingComplete() {
 }
 
 function checkScrollLetter() {
-  // 仅对木头显示
-  const role = localStorage.getItem('user_role')
+  // 优先从 Cookie 获取角色，如果 Cookie 没有再看 localStorage
+  const roleCookie = useCookie('user_role')
+  const role = roleCookie.value || localStorage.getItem('user_role')
+  
   if (role !== 'mutou') return
   
   // 检查是否已经看过

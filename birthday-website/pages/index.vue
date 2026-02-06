@@ -74,6 +74,14 @@ async function handleLogin() {
     
     if (res.success) {
       // 登录成功
+      // 使用 Cookie 存储认证信息，有效期 7 天
+      const tokenCookie = useCookie('auth_token', { maxAge: 60 * 60 * 24 * 7 })
+      const roleCookie = useCookie('user_role', { maxAge: 60 * 60 * 24 * 7 })
+      
+      tokenCookie.value = res.token
+      roleCookie.value = 'mutou'
+      
+      // 同时存 localStorage 备用 (可选)
       localStorage.setItem('auth_token', res.token)
       localStorage.setItem('user_role', 'mutou')
       

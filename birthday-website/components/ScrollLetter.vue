@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 
 const props = defineProps({
   modelValue: Boolean
@@ -125,7 +125,6 @@ function handleOverlayClick() {
 }
 
 // Watch prop change to show
-import { watch } from 'vue'
 watch(() => props.modelValue, (val) => {
   visible.value = val
   if (val) {

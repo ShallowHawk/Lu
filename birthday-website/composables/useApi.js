@@ -1,10 +1,12 @@
 // API配置文件
 export const useApi = () => {
-  // 生产环境 API 地址
-  const baseURL = 'https://wildmutou.art/api'
+  // 使用相对路径，在生产环境由 Nginx 转发，本地开发由代理转发
+  const baseURL = '/api'
   
-  // 本地开发时，如果需要调试本地后端，可以临时改为 'http://localhost:5000'
-  // 但目前需求是直接连线上，所以保持不变
+  // 打印当前使用的 API 地址，便于调试确认
+  if (process.client) {
+    console.log('当前 API Base URL:', baseURL)
+  }
   
   const headers = {
     'Content-Type': 'application/json',

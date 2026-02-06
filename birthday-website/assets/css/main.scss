@@ -1,3 +1,5 @@
+@use "sass:color";
+
 // 设计系统 - 治愈系和风物语
 :root {
   // 和风色板 (Nippon Colors)
@@ -75,7 +77,7 @@ body {
   
   &:hover {
     transform: scale(1.05);
-    background: lighten(#F09199, 5%);
+    background: color.adjust(#F09199, $lightness: 5%);
   }
   
   &:active {

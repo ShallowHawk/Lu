@@ -159,7 +159,7 @@ function checkScrollLetter() {
   if (role !== 'mutou') return
   
   // 检查是否已经看过
-  const hasSeen = localStorage.getItem('has_seen_notice_2026_feb')
+  const hasSeen = localStorage.getItem('has_seen_notice_2026_feb_v2')
   
   // 临时逻辑：如果需要调试，可以把这里改为 !hasSeen || true
   if (!hasSeen) {
@@ -174,7 +174,7 @@ function handleScrollClose(markAsRead) {
   if (markAsRead) {
     // 只有点击“朕已阅”才标记已读
     // 设置过期时间？目前永久标记，除非清除缓存
-    localStorage.setItem('has_seen_notice_2026_feb', 'true')
+    localStorage.setItem('has_seen_notice_2026_feb_v2', 'true')
   }
 }
 

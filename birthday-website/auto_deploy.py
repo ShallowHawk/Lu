@@ -89,9 +89,9 @@ def deploy():
     # 5. Setup Frontend
     frontend_cmds = [
         f"cd {REMOTE_DIR} && npm install",
-        f"cd {REMOTE_DIR} && npm run build",
-        f"pm2 delete nuxt-app || true",
-        f"cd {REMOTE_DIR} && pm2 start .output/server/index.mjs --name nuxt-app"
+        f"cd {REMOTE_DIR} && npm run generate",  # Generate static files
+        # No need to run pm2 for static site
+        f"pm2 delete nuxt-app || true"
     ]
     for cmd in frontend_cmds:
         run_command(client, cmd, "Setting up Frontend")
@@ -101,16 +101,16 @@ def deploy():
 server {
     listen 80;
     server_name _;
+    
+    root /var/www/birthday-website/.output/public;
+    index index.html;
 
+    # Static file serving
     location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+        try_files $uri $uri/ /index.html;
     }
 
+    # API Proxy
     location /api {
         proxy_pass http://localhost:5000;
         proxy_http_version 1.1;
